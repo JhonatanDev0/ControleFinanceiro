@@ -535,3 +535,74 @@ function changeMonth(dir) {
   histMonth = monthKey(d.getFullYear(), d.getMonth());
   renderHistorico();
 }
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+function exportData() {
+  const payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    expenses: allData,
+    metas: metas,
+  };
+
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+
+  const a = document.createElement('a');
+  a.href     = url;
+  a.download = `meu-financeiro-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showToast('Backup exportado com sucesso!');
+}
+
+let pendingImportData = null;
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.expenses || !parsed.metas) throw new Error('Formato inválido');
+      pendingImportData = parsed;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('importModal')).show();
+    } catch {
+      showToast('Arquivo inválido ou corrompido.', true);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport() {
+  if (!pendingImportData) return;
+  allData = pendingImportData.expenses;
+  metas   = pendingImportData.metas;
+  saveData();
+  pendingImportData = null;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('importModal')).hide();
+  navigateTo('dashboard');
+  showToast('Dados importados com sucesso!');
+}
+
+function cancelImport() {
+  pendingImportData = null;
+}
+
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('appToast');
+  const icon  = document.getElementById('toastIcon');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.toggle('error', isError);
+  icon.className = isError ? 'ti ti-alert-circle' : 'ti ti-check-circle';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}

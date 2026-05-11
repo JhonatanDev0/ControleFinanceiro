@@ -602,3 +602,66 @@ body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: .75rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.sidebar-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  color: rgba(255,255,255,.55);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Sora', sans-serif;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+
+.sidebar-action-btn i { font-size: 16px; flex-shrink: 0; }
+.sidebar-action-btn:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.9); border-color: rgba(255,255,255,.15); }
+
+/* Toast */
+.toast-wrap {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.app-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #18211C;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .25s, transform .25s;
+}
+
+.app-toast.show { opacity: 1; transform: translateY(0); }
+.app-toast i { font-size: 18px; color: var(--green); }
+.app-toast.error i { color: #DC2626; }
