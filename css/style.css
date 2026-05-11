@@ -207,22 +207,24 @@ body {
   font-size: 24px; cursor: pointer; padding: 4px;
 }
 
-/* Offcanvas */
-.offcanvas-dark { background: #0D1F18 !important; max-width: 260px; }
-.btn-close-offcanvas {
-  background: rgba(255,255,255,.08); border: none;
-  width: 30px; height: 30px; border-radius: 7px;
-  color: rgba(255,255,255,.6); font-size: 16px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
+.hamburger-btn {
+  background: none; border: none;
+  color: rgba(255,255,255,.7);
+  font-size: 24px; cursor: pointer; padding: 4px;
 }
-.offcanvas-profile {
-  display: flex; align-items: center; gap: 10px;
-  padding: 1rem 0; margin-top: auto;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-.offcanvas-profile-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green); }
 
-/* Bottom Nav */
+.mobile-action-btn {
+  background: rgba(255,255,255,.1);
+  border: none;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.75);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.mobile-action-btn:hover { background: rgba(255,255,255,.18); }
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   height: var(--bnav-h);

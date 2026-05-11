@@ -71,35 +71,15 @@
       <div class="brand-logo-sm"><i class="ti ti-currency-dollar"></i></div>
       <span class="brand-text-sm">Financeiro</span>
     </div>
-    <button class="hamburger-btn" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
-      <i class="ti ti-menu-2"></i>
-    </button>
-  </header>
-
-  <!-- OFFCANVAS -->
-  <div class="offcanvas offcanvas-start offcanvas-dark" tabindex="-1" id="mobileMenu">
-    <div class="offcanvas-header border-0 pb-2">
-      <div class="d-flex align-items-center gap-2">
-        <div class="brand-logo-sm"><i class="ti ti-currency-dollar"></i></div>
-        <span class="brand-text-sm">Financeiro</span>
-      </div>
-      <button type="button" class="btn-close-offcanvas" data-bs-dismiss="offcanvas">
-        <i class="ti ti-x"></i>
+    <div class="d-flex align-items-center gap-2">
+      <button class="mobile-action-btn" onclick="exportData()" title="Exportar dados">
+        <i class="ti ti-download"></i>
+      </button>
+      <button class="mobile-action-btn" onclick="document.getElementById('importInput').click()" title="Importar dados">
+        <i class="ti ti-upload"></i>
       </button>
     </div>
-    <div class="offcanvas-body pt-0">
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-item active" data-page="dashboard" data-bs-dismiss="offcanvas"><i class="ti ti-layout-dashboard nav-icon"></i><span class="nav-label">Dashboard</span></a>
-        <a href="#" class="nav-item" data-page="contas" data-bs-dismiss="offcanvas"><i class="ti ti-receipt nav-icon"></i><span class="nav-label">Contas</span></a>
-        <a href="#" class="nav-item" data-page="metas" data-bs-dismiss="offcanvas"><i class="ti ti-target nav-icon"></i><span class="nav-label">Metas</span></a>
-        <a href="#" class="nav-item" data-page="historico" data-bs-dismiss="offcanvas"><i class="ti ti-calendar-stats nav-icon"></i><span class="nav-label">Histórico</span></a>
-      </nav>
-      <div class="offcanvas-profile mt-auto">
-        <img src="assets/hero.png" alt="Perfil" class="offcanvas-profile-img"/>
-        <span class="profile-name" style="color:#fff;font-size:14px">Financeiro</span>
-      </div>
-    </div>
-  </div>
+  </header>
 
   <!-- BOTTOM NAV (mobile) -->
   <nav class="bottom-nav d-flex d-lg-none">
