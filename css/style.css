@@ -711,3 +711,122 @@ body {
 .app-toast.show { opacity: 1; transform: translateY(0); }
 .app-toast i { font-size: 18px; color: var(--green); }
 .app-toast.error i { color: #DC2626; }
+
+/* ============================================================
+   PERSON SELECTOR (modal)
+   ============================================================ */
+.person-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.person-option { margin: 0; cursor: pointer; flex: 1; }
+.person-option input[type="radio"] { display: none; }
+
+.person-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Sora', sans-serif;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.person-option input:checked + .person-j {
+  background: #E8F0FD;
+  border-color: #2D6BE4;
+  color: #2D6BE4;
+}
+
+.person-option input:checked + .person-c {
+  background: #FDE8F5;
+  border-color: #C23D8E;
+  color: #C23D8E;
+}
+
+/* Person badge in table/cards */
+.person-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.person-j-badge { background: #E8F0FD; color: #2D6BE4; }
+.person-c-badge { background: #FDE8F5; color: #C23D8E; }
+
+/* ============================================================
+   EXPENSE CARDS (mobile)
+   ============================================================ */
+.exp-cards { display: flex; flex-direction: column; }
+
+.exp-card-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.exp-card-item:last-child { border-bottom: none; }
+.exp-card-item:active { background: var(--surface2); }
+
+.exp-card-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.exp-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.exp-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.exp-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.exp-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.exp-card-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+  white-space: nowrap;
+}
+.exp-card-val.zero { color: var(--text3); font-weight: 400; }
+
+.exp-card-actions { display: flex; gap: 4px; }

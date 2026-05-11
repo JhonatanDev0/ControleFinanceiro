@@ -8,16 +8,16 @@ const EXPENSES_KEY = 'mf_expenses_v2';
 const METAS_KEY    = 'mf_metas_v2';
 
 const DEFAULT_EXPENSES = [
-  { id:1,  name:'Nubank',      category:'cartoes',  value:1799.35 },
-  { id:2,  name:'Inter',       category:'cartoes',  value:0 },
-  { id:3,  name:'Next',        category:'cartoes',  value:325.25 },
-  { id:4,  name:'Santander',   category:'cartoes',  value:0 },
-  { id:5,  name:'Faculdade',   category:'educacao', value:245.14 },
-  { id:6,  name:'Claro',       category:'servicos', value:0 },
-  { id:7,  name:'Internet',    category:'servicos', value:130 },
-  { id:8,  name:'Condomínio',  category:'moradia',  value:173.99 },
-  { id:9,  name:'Apartamento', category:'moradia',  value:1713.12 },
-  { id:10, name:'Caixa',       category:'outros',   value:69 },
+  { id:1,  name:'Nubank',      category:'cartoes',  value:1799.35, person:'jhonatan' },
+  { id:2,  name:'Inter',       category:'cartoes',  value:0,       person:'jhonatan' },
+  { id:3,  name:'Next',        category:'cartoes',  value:325.25,  person:'camila' },
+  { id:4,  name:'Santander',   category:'cartoes',  value:0,       person:'camila' },
+  { id:5,  name:'Faculdade',   category:'educacao', value:245.14,  person:'camila' },
+  { id:6,  name:'Claro',       category:'servicos', value:0,       person:'jhonatan' },
+  { id:7,  name:'Internet',    category:'servicos', value:130,     person:'jhonatan' },
+  { id:8,  name:'Condomínio',  category:'moradia',  value:173.99,  person:'jhonatan' },
+  { id:9,  name:'Apartamento', category:'moradia',  value:1713.12, person:'jhonatan' },
+  { id:10, name:'Caixa',       category:'outros',   value:69,      person:'camila' },
 ];
 
 const DEFAULT_METAS = [
@@ -253,6 +253,10 @@ function renderCatBreakdown(exp) {
   `).join('');
 }
 
+const personBadge = p => p === 'camila'
+  ? '<span class="person-badge person-c-badge">👩 Camila</span>'
+  : '<span class="person-badge person-j-badge">👨 Jhonatan</span>';
+
 /* ============================================================
    CONTAS
    ============================================================ */
@@ -263,16 +267,17 @@ function renderContas() {
   document.getElementById('contas-subtitle').textContent =
     filtered.length + ' conta' + (filtered.length !== 1 ? 's' : '') + ' · ' + monthLabel(curMonth);
 
-  const tbody = document.getElementById('exp-tbody');
+  const empty = `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div></td></tr>`;
+  const emptyCard = `<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div>`;
 
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="4">
-      <div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div>
-    </td></tr>`;
+    document.getElementById('exp-tbody').innerHTML = empty;
+    document.getElementById('exp-cards').innerHTML = emptyCard;
     return;
   }
 
-  tbody.innerHTML = filtered.map(e => {
+  // Desktop table rows
+  document.getElementById('exp-tbody').innerHTML = filtered.map(e => {
     const cat  = CATEGORIES[e.category] || {};
     const zero = e.value === 0;
     return `
@@ -284,12 +289,39 @@ function renderContas() {
       <td><span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)}">
         ${cat.emoji || ''} ${cat.label || e.category}
       </span></td>
+      <td>${personBadge(e.person)}</td>
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
       <td class="text-end">
         <button class="tbl-btn" onclick="openEditModal(${e.id})" title="Editar"><i class="ti ti-pencil"></i></button>
         <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')" title="Remover"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
+  }).join('');
+
+  // Mobile cards
+  document.getElementById('exp-cards').innerHTML = filtered.map(e => {
+    const cat  = CATEGORIES[e.category] || {};
+    const zero = e.value === 0;
+    return `
+    <div class="exp-card-item">
+      <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
+      <div class="exp-card-info">
+        <div class="exp-card-name">${e.name}</div>
+        <div class="exp-card-meta">
+          <span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)};font-size:10px">
+            ${cat.emoji || ''} ${cat.label || e.category}
+          </span>
+          ${personBadge(e.person)}
+        </div>
+      </div>
+      <div class="exp-card-right">
+        <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
+        <div class="exp-card-actions">
+          <button class="tbl-btn" onclick="openEditModal(${e.id})"><i class="ti ti-pencil"></i></button>
+          <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -311,23 +343,27 @@ function openEditModal(id) {
   document.getElementById('modal-name').value = e.name;
   document.getElementById('modal-cat').value  = e.category;
   document.getElementById('modal-val').value  = e.value.toFixed(2).replace('.', ',');
+  document.querySelectorAll('input[name="modal-person"]').forEach(r => {
+    r.checked = r.value === (e.person || 'jhonatan');
+  });
   document.getElementById('modal-title').textContent = 'Editar conta';
   expModal().show();
 }
 
 function saveExp() {
-  const id    = document.getElementById('modal-id').value;
-  const name  = document.getElementById('modal-name').value.trim();
-  const cat   = document.getElementById('modal-cat').value;
-  const value = parseVal(document.getElementById('modal-val').value);
+  const id     = document.getElementById('modal-id').value;
+  const name   = document.getElementById('modal-name').value.trim();
+  const cat    = document.getElementById('modal-cat').value;
+  const value  = parseVal(document.getElementById('modal-val').value);
+  const person = document.querySelector('input[name="modal-person"]:checked')?.value || 'jhonatan';
   if (!name) { document.getElementById('modal-name').focus(); return; }
 
   let exp = expOfMonth(curMonth);
   if (id) {
-    exp = exp.map(e => e.id === +id ? { ...e, name, category: cat, value } : e);
+    exp = exp.map(e => e.id === +id ? { ...e, name, category: cat, value, person } : e);
   } else {
     const newId = exp.length ? Math.max(...exp.map(e => e.id)) + 1 : 1;
-    exp.push({ id: newId, name, category: cat, value });
+    exp.push({ id: newId, name, category: cat, value, person });
   }
   setExpOfMonth(curMonth, exp);
   expModal().hide();
@@ -517,14 +553,18 @@ function renderHistorico() {
   }
 
   const tbody = document.getElementById('hist-tbody');
+  const cards  = document.getElementById('hist-cards');
+
   if (!exp.length) {
-    tbody.innerHTML = `<tr><td colspan="3">
-      <div class="empty-state"><i class="ti ti-calendar-off"></i>Sem registros neste mês.</div>
-    </td></tr>`;
+    const empty = `<div class="empty-state"><i class="ti ti-calendar-off"></i>Sem registros neste mês.</div>`;
+    tbody.innerHTML = `<tr><td colspan="4">${empty}</td></tr>`;
+    cards.innerHTML = empty;
     return;
   }
 
-  tbody.innerHTML = [...exp].sort((a, b) => b.value - a.value).map(e => {
+  const sorted = [...exp].sort((a, b) => b.value - a.value);
+
+  tbody.innerHTML = sorted.map(e => {
     const cat  = CATEGORIES[e.category] || {};
     const zero = e.value === 0;
     return `
@@ -536,8 +576,30 @@ function renderHistorico() {
       <td><span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)}">
         ${cat.emoji || ''} ${cat.label || e.category}
       </span></td>
+      <td>${personBadge(e.person)}</td>
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
     </tr>`;
+  }).join('');
+
+  cards.innerHTML = sorted.map(e => {
+    const cat  = CATEGORIES[e.category] || {};
+    const zero = e.value === 0;
+    return `
+    <div class="exp-card-item">
+      <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
+      <div class="exp-card-info">
+        <div class="exp-card-name">${e.name}</div>
+        <div class="exp-card-meta">
+          <span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)};font-size:10px">
+            ${cat.emoji || ''} ${cat.label || e.category}
+          </span>
+          ${personBadge(e.person)}
+        </div>
+      </div>
+      <div class="exp-card-right">
+        <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
+      </div>
+    </div>`;
   }).join('');
 }
 

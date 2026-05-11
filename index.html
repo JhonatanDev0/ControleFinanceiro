@@ -192,17 +192,21 @@
       </div>
 
       <div class="panel p-0">
-        <table class="data-table" id="exp-table">
+        <!-- Desktop table -->
+        <table class="data-table d-none d-md-table" id="exp-table">
           <thead>
             <tr>
               <th><i class="ti ti-file-text"></i> Conta</th>
               <th><i class="ti ti-tag"></i> Categoria</th>
+              <th><i class="ti ti-user"></i> Pessoa</th>
               <th class="text-end"><i class="ti ti-coin"></i> Valor</th>
               <th class="text-end"><i class="ti ti-settings"></i> Ações</th>
             </tr>
           </thead>
           <tbody id="exp-tbody"></tbody>
         </table>
+        <!-- Mobile cards -->
+        <div class="exp-cards d-md-none" id="exp-cards"></div>
       </div>
     </section>
 
@@ -252,16 +256,18 @@
       </div>
 
       <div class="panel p-0">
-        <table class="data-table">
+        <table class="data-table d-none d-md-table">
           <thead>
             <tr>
               <th><i class="ti ti-file-text"></i> Conta</th>
               <th><i class="ti ti-tag"></i> Categoria</th>
+              <th><i class="ti ti-user"></i> Pessoa</th>
               <th class="text-end"><i class="ti ti-coin"></i> Valor</th>
             </tr>
           </thead>
           <tbody id="hist-tbody"></tbody>
         </table>
+        <div class="exp-cards d-md-none" id="hist-cards"></div>
       </div>
     </section>
 
@@ -291,6 +297,19 @@
               <option value="educacao">🎓 Educação</option>
               <option value="outros">📦 Outros</option>
             </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label"><i class="ti ti-user"></i> Lançado por</label>
+            <div class="person-selector">
+              <label class="person-option">
+                <input type="radio" name="modal-person" value="jhonatan" checked/>
+                <span class="person-btn person-j">👨 Jhonatan</span>
+              </label>
+              <label class="person-option">
+                <input type="radio" name="modal-person" value="camila"/>
+                <span class="person-btn person-c">👩 Camila</span>
+              </label>
+            </div>
           </div>
           <div class="field-group mb-0">
             <label class="field-label"><i class="ti ti-currency-dollar"></i> Valor (R$)</label>
