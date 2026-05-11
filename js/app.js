@@ -8,16 +8,16 @@ const EXPENSES_KEY = 'mf_expenses_v2';
 const METAS_KEY    = 'mf_metas_v2';
 
 const DEFAULT_EXPENSES = [
-  { id:1,  name:'Nubank',      category:'cartoes',  value:1799.35, person:'jhonatan' },
-  { id:2,  name:'Inter',       category:'cartoes',  value:0,       person:'jhonatan' },
-  { id:3,  name:'Next',        category:'cartoes',  value:325.25,  person:'camila' },
-  { id:4,  name:'Santander',   category:'cartoes',  value:0,       person:'camila' },
-  { id:5,  name:'Faculdade',   category:'educacao', value:245.14,  person:'camila' },
-  { id:6,  name:'Claro',       category:'servicos', value:0,       person:'jhonatan' },
-  { id:7,  name:'Internet',    category:'servicos', value:130,     person:'jhonatan' },
-  { id:8,  name:'Condomínio',  category:'moradia',  value:173.99,  person:'jhonatan' },
-  { id:9,  name:'Apartamento', category:'moradia',  value:1713.12, person:'jhonatan' },
-  { id:10, name:'Caixa',       category:'outros',   value:69,      person:'camila' },
+  { id:1,  name:'Nubank',      category:'cartoes',  value:1799.35, person:'jhonatan', dueDate:'2026-05-10', paid:false },
+  { id:2,  name:'Inter',       category:'cartoes',  value:0,       person:'jhonatan', dueDate:'',           paid:false },
+  { id:3,  name:'Next',        category:'cartoes',  value:325.25,  person:'camila',   dueDate:'2026-05-15', paid:false },
+  { id:4,  name:'Santander',   category:'cartoes',  value:0,       person:'camila',   dueDate:'',           paid:false },
+  { id:5,  name:'Faculdade',   category:'educacao', value:245.14,  person:'camila',   dueDate:'2026-05-05', paid:true  },
+  { id:6,  name:'Claro',       category:'servicos', value:0,       person:'jhonatan', dueDate:'',           paid:false },
+  { id:7,  name:'Internet',    category:'servicos', value:130,     person:'jhonatan', dueDate:'2026-05-20', paid:false },
+  { id:8,  name:'Condomínio',  category:'moradia',  value:173.99,  person:'jhonatan', dueDate:'2026-05-05', paid:true  },
+  { id:9,  name:'Apartamento', category:'moradia',  value:1713.12, person:'jhonatan', dueDate:'2026-05-10', paid:false },
+  { id:10, name:'Caixa',       category:'outros',   value:69,      person:'camila',   dueDate:'2026-05-25', paid:false },
 ];
 
 const DEFAULT_METAS = [
@@ -27,11 +27,11 @@ const DEFAULT_METAS = [
 ];
 
 const CATEGORIES = {
-  moradia:  { label:'Moradia',  emoji:'🏠', color:'#1D9E75', icon:'ti-home' },
-  cartoes:  { label:'Cartões',  emoji:'💳', color:'#2D6BE4', icon:'ti-credit-card' },
-  servicos: { label:'Serviços', emoji:'📡', color:'#E8874A', icon:'ti-wifi' },
-  educacao: { label:'Educação', emoji:'🎓', color:'#4A9AE8', icon:'ti-school' },
-  outros:   { label:'Outros',   emoji:'📦', color:'#9B59B6', icon:'ti-box' },
+  moradia:  { label:'Moradia',  icon:'ti-home',        color:'#1D9E75' },
+  cartoes:  { label:'Cartões',  icon:'ti-credit-card', color:'#2D6BE4' },
+  servicos: { label:'Serviços', icon:'ti-wifi',        color:'#E8874A' },
+  educacao: { label:'Educação', icon:'ti-school',      color:'#4A9AE8' },
+  outros:   { label:'Outros',   icon:'ti-box',         color:'#9B59B6' },
 };
 
 const META_COLORS = ['#1D9E75','#2D6BE4','#6C47E8','#E8874A','#D97706','#DC2626'];
@@ -41,7 +41,8 @@ let allData      = {};
 let metas        = [];
 let curMonth     = '';
 let histMonth    = '';
-let activeFilter = 'all';
+let activeFilter  = 'all';
+let personFilter  = 'all';
 let pendingDelId = null;
 let pendingDelType = 'expense';
 let chartHistory = null;
@@ -128,12 +129,22 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('click', e => { e.preventDefault(); navigateTo(el.dataset.page); });
   });
 
-  // Filter pills
-  document.querySelectorAll('.filter-pill').forEach(btn => {
+  // Category filter pills
+  document.querySelectorAll('.filter-pill:not(.person-pill)').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.filter-pill:not(.person-pill)').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilter = btn.dataset.cat;
+      renderContas();
+    });
+  });
+
+  // Person filter pills
+  document.querySelectorAll('.person-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.person-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      personFilter = btn.dataset.person;
       renderContas();
     });
   });
@@ -244,7 +255,7 @@ function renderCatBreakdown(exp) {
   el.innerHTML = sorted.map(([cat, val]) => `
     <div class="cat-row">
       <div class="cat-dot" style="background:${catColor(cat)}"></div>
-      <span class="cat-name">${CATEGORIES[cat]?.emoji || ''} ${CATEGORIES[cat]?.label || cat}</span>
+      <span class="cat-name"><i class="ti ${CATEGORIES[cat]?.icon || 'ti-tag'}" style="color:${catColor(cat)}"></i> ${CATEGORIES[cat]?.label || cat}</span>
       <div class="cat-bar-wrap">
         <div class="cat-bar" style="width:${Math.round(val/maxVal*100)}%;background:${catColor(cat)}"></div>
       </div>
@@ -254,44 +265,96 @@ function renderCatBreakdown(exp) {
 }
 
 const personBadge = p => p === 'camila'
-  ? '<span class="person-badge person-c-badge">👩 Camila</span>'
-  : '<span class="person-badge person-j-badge">👨 Jhonatan</span>';
+  ? '<span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> Camila</span>'
+  : '<span class="person-badge person-j-badge"><i class="ti ti-user"></i> Jhonatan</span>';
+
+const catBadge = cat => {
+  const c = CATEGORIES[cat] || { label: cat, icon: 'ti-tag', color: '#888' };
+  return `<span class="cat-badge" style="background:${c.color}22;color:${c.color}">
+    <i class="ti ${c.icon}"></i> ${c.label}
+  </span>`;
+};
+
+function dueBadge(dueDate, paid) {
+  if (!dueDate) return '<span class="due-badge none"><i class="ti ti-minus"></i> —</span>';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due   = new Date(dueDate + 'T00:00:00');
+  const diff  = Math.ceil((due - today) / 86400000);
+  const label = due.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+  if (paid) return `<span class="due-badge ok"><i class="ti ti-check"></i> ${label}</span>`;
+  if (diff < 0)  return `<span class="due-badge overdue"><i class="ti ti-alert-circle"></i> ${label}</span>`;
+  if (diff <= 3) return `<span class="due-badge soon"><i class="ti ti-clock"></i> ${label}</span>`;
+  return `<span class="due-badge ok"><i class="ti ti-calendar"></i> ${label}</span>`;
+}
+
+function paidBtn(id, paid) {
+  return paid
+    ? `<button class="paid-badge paid" onclick="togglePaid(${id})" title="Marcar como pendente"><i class="ti ti-circle-check-filled"></i> Pago</button>`
+    : `<button class="paid-badge unpaid" onclick="togglePaid(${id})" title="Marcar como pago"><i class="ti ti-circle"></i> Pendente</button>`;
+}
+
+function updatePaidLabel(cb) {
+  document.getElementById('paid-label').textContent = cb.checked ? 'Pago' : 'Pendente';
+}
+
+async function togglePaid(id) {
+  const exp = expOfMonth(curMonth);
+  const idx = exp.findIndex(e => e.id === id);
+  if (idx > -1) exp[idx].paid = !exp[idx].paid;
+  setExpOfMonth(curMonth, exp);
+  renderContas();
+}
 
 /* ============================================================
    CONTAS
    ============================================================ */
 function renderContas() {
   const exp = expOfMonth(curMonth);
-  const filtered = activeFilter === 'all' ? exp : exp.filter(e => e.category === activeFilter);
+
+  // Totals (always from full list, not filtered)
+  const totalAll = total(exp);
+  const totalJ   = total(exp.filter(e => e.person === 'jhonatan'));
+  const totalC   = total(exp.filter(e => e.person === 'camila'));
+  document.getElementById('contas-total').textContent   = fmt(totalAll);
+  document.getElementById('contas-total-j').textContent = fmt(totalJ);
+  document.getElementById('contas-total-c').textContent = fmt(totalC);
+
+  // Apply filters
+  let filtered = exp;
+  if (activeFilter !== 'all')  filtered = filtered.filter(e => e.category === activeFilter);
+  if (personFilter !== 'all')  filtered = filtered.filter(e => e.person === personFilter);
 
   document.getElementById('contas-subtitle').textContent =
     filtered.length + ' conta' + (filtered.length !== 1 ? 's' : '') + ' · ' + monthLabel(curMonth);
 
-  const empty = `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div></td></tr>`;
-  const emptyCard = `<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div>`;
+  const emptyHtml = `<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div>`;
 
   if (!filtered.length) {
-    document.getElementById('exp-tbody').innerHTML = empty;
-    document.getElementById('exp-cards').innerHTML = emptyCard;
+    document.getElementById('exp-tbody').innerHTML = `<tr><td colspan="5">${emptyHtml}</td></tr>`;
+    document.getElementById('exp-cards').innerHTML = emptyHtml;
     return;
   }
 
-  // Desktop table rows
-  document.getElementById('exp-tbody').innerHTML = filtered.map(e => {
-    const cat  = CATEGORIES[e.category] || {};
+  // Desktop table — sort: unpaid first, then by due date
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    if (a.paid !== b.paid) return a.paid ? 1 : -1;
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    return a.dueDate ? -1 : 1;
+  });
+
+  document.getElementById('exp-tbody').innerHTML = sortedFiltered.map(e => {
     const zero = e.value === 0;
-    return `
-    <tr>
+    return `<tr class="${e.paid ? 'exp-row-paid' : ''}">
       <td><div class="name-cell">
         <div class="row-dot" style="background:${catColor(e.category)}"></div>
-        ${e.name}
+        <span class="exp-name-text">${e.name}</span>
       </div></td>
-      <td><span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)}">
-        ${cat.emoji || ''} ${cat.label || e.category}
-      </span></td>
+      <td>${catBadge(e.category)}</td>
       <td>${personBadge(e.person)}</td>
+      <td>${dueBadge(e.dueDate, e.paid)}</td>
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
       <td class="text-end">
+        ${paidBtn(e.id, e.paid)}
         <button class="tbl-btn" onclick="openEditModal(${e.id})" title="Editar"><i class="ti ti-pencil"></i></button>
         <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')" title="Remover"><i class="ti ti-trash"></i></button>
       </td>
@@ -299,24 +362,22 @@ function renderContas() {
   }).join('');
 
   // Mobile cards
-  document.getElementById('exp-cards').innerHTML = filtered.map(e => {
-    const cat  = CATEGORIES[e.category] || {};
+  document.getElementById('exp-cards').innerHTML = sortedFiltered.map(e => {
     const zero = e.value === 0;
-    return `
-    <div class="exp-card-item">
+    return `<div class="exp-card-item ${e.paid ? 'exp-row-paid' : ''}">
       <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
       <div class="exp-card-info">
-        <div class="exp-card-name">${e.name}</div>
+        <div class="exp-card-name exp-name-text">${e.name}</div>
         <div class="exp-card-meta">
-          <span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)};font-size:10px">
-            ${cat.emoji || ''} ${cat.label || e.category}
-          </span>
+          ${catBadge(e.category)}
           ${personBadge(e.person)}
+          ${dueBadge(e.dueDate, e.paid)}
         </div>
       </div>
       <div class="exp-card-right">
         <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
         <div class="exp-card-actions">
+          ${paidBtn(e.id, e.paid)}
           <button class="tbl-btn" onclick="openEditModal(${e.id})"><i class="ti ti-pencil"></i></button>
           <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')"><i class="ti ti-trash"></i></button>
         </div>
@@ -331,6 +392,10 @@ function openAddModal() {
   document.getElementById('modal-name').value = '';
   document.getElementById('modal-cat').value  = 'moradia';
   document.getElementById('modal-val').value  = '';
+  document.getElementById('modal-due').value  = '';
+  document.getElementById('modal-paid').checked = false;
+  document.getElementById('paid-label').textContent = 'Pendente';
+  document.querySelectorAll('input[name="modal-person"]').forEach(r => { r.checked = r.value === 'jhonatan'; });
   document.getElementById('modal-title').textContent = 'Nova conta';
   expModal().show();
   setTimeout(() => document.getElementById('modal-name').focus(), 350);
@@ -343,6 +408,9 @@ function openEditModal(id) {
   document.getElementById('modal-name').value = e.name;
   document.getElementById('modal-cat').value  = e.category;
   document.getElementById('modal-val').value  = e.value.toFixed(2).replace('.', ',');
+  document.getElementById('modal-due').value  = e.dueDate || '';
+  document.getElementById('modal-paid').checked = !!e.paid;
+  document.getElementById('paid-label').textContent = e.paid ? 'Pago' : 'Pendente';
   document.querySelectorAll('input[name="modal-person"]').forEach(r => {
     r.checked = r.value === (e.person || 'jhonatan');
   });
@@ -351,19 +419,21 @@ function openEditModal(id) {
 }
 
 function saveExp() {
-  const id     = document.getElementById('modal-id').value;
-  const name   = document.getElementById('modal-name').value.trim();
-  const cat    = document.getElementById('modal-cat').value;
-  const value  = parseVal(document.getElementById('modal-val').value);
-  const person = document.querySelector('input[name="modal-person"]:checked')?.value || 'jhonatan';
+  const id      = document.getElementById('modal-id').value;
+  const name    = document.getElementById('modal-name').value.trim();
+  const cat     = document.getElementById('modal-cat').value;
+  const value   = parseVal(document.getElementById('modal-val').value);
+  const person  = document.querySelector('input[name="modal-person"]:checked')?.value || 'jhonatan';
+  const dueDate = document.getElementById('modal-due').value;
+  const paid    = document.getElementById('modal-paid').checked;
   if (!name) { document.getElementById('modal-name').focus(); return; }
 
   let exp = expOfMonth(curMonth);
   if (id) {
-    exp = exp.map(e => e.id === +id ? { ...e, name, category: cat, value, person } : e);
+    exp = exp.map(e => e.id === +id ? { ...e, name, category: cat, value, person, dueDate, paid } : e);
   } else {
     const newId = exp.length ? Math.max(...exp.map(e => e.id)) + 1 : 1;
-    exp.push({ id: newId, name, category: cat, value, person });
+    exp.push({ id: newId, name, category: cat, value, person, dueDate, paid });
   }
   setExpOfMonth(curMonth, exp);
   expModal().hide();
@@ -565,34 +635,26 @@ function renderHistorico() {
   const sorted = [...exp].sort((a, b) => b.value - a.value);
 
   tbody.innerHTML = sorted.map(e => {
-    const cat  = CATEGORIES[e.category] || {};
     const zero = e.value === 0;
-    return `
-    <tr>
+    return `<tr>
       <td><div class="name-cell">
         <div class="row-dot" style="background:${catColor(e.category)}"></div>
         ${e.name}
       </div></td>
-      <td><span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)}">
-        ${cat.emoji || ''} ${cat.label || e.category}
-      </span></td>
+      <td>${catBadge(e.category)}</td>
       <td>${personBadge(e.person)}</td>
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
     </tr>`;
   }).join('');
 
   cards.innerHTML = sorted.map(e => {
-    const cat  = CATEGORIES[e.category] || {};
     const zero = e.value === 0;
-    return `
-    <div class="exp-card-item">
+    return `<div class="exp-card-item">
       <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
       <div class="exp-card-info">
         <div class="exp-card-name">${e.name}</div>
         <div class="exp-card-meta">
-          <span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)};font-size:10px">
-            ${cat.emoji || ''} ${cat.label || e.category}
-          </span>
+          ${catBadge(e.category)}
           ${personBadge(e.person)}
         </div>
       </div>

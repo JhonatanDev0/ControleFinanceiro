@@ -830,3 +830,131 @@ body {
 .exp-card-val.zero { color: var(--text3); font-weight: 400; }
 
 .exp-card-actions { display: flex; gap: 4px; }
+
+/* ---- Pink KPI (Camila) ---- */
+.kpi-pink { background: #8B1A6B; color: #fff; }
+.kpi-pink .kpi-icon { background: rgba(255,255,255,.15); color: #fff; }
+.kpi-pink .kpi-label { color: rgba(255,255,255,.6); }
+
+/* ---- Person filter pills ---- */
+.filter-pill[data-person="jhonatan"].active { background: var(--blue); border-color: var(--blue); }
+.filter-pill[data-person="camila"].active   { background: #C23D8E; border-color: #C23D8E; }
+
+/* ---- Cat badge with icon (no emoji) ---- */
+.cat-badge i { font-size: 12px; }
+
+/* ============================================================
+   TOTALS SCROLL (mobile)
+   ============================================================ */
+.totals-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+.totals-scroll::-webkit-scrollbar { display: none; }
+
+.totals-inner {
+  display: flex;
+  gap: 10px;
+  min-width: max-content;
+}
+
+.kpi-compact {
+  min-width: 150px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .totals-inner { min-width: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .kpi-compact  { min-width: 0; }
+}
+
+/* ============================================================
+   PAID TOGGLE
+   ============================================================ */
+.paid-toggle-wrap {
+  padding: 8px 0 4px;
+}
+
+.paid-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.paid-toggle input { display: none; }
+
+.paid-toggle-track {
+  width: 40px; height: 22px;
+  background: var(--border2);
+  border-radius: 11px;
+  position: relative;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+
+.paid-toggle input:checked ~ .paid-toggle-track { background: var(--green); }
+
+.paid-toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.paid-toggle input:checked ~ .paid-toggle-track .paid-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.paid-toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+}
+
+/* ============================================================
+   DUE DATE & PAID BADGES
+   ============================================================ */
+.due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.due-badge.ok       { background: #E1F5EE; color: #085041; }
+.due-badge.overdue  { background: #FEE2E2; color: #DC2626; }
+.due-badge.soon     { background: #FEF3C7; color: #D97706; }
+.due-badge.none     { background: var(--surface3); color: var(--text3); }
+
+.paid-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.paid-badge.paid    { background: #E1F5EE; color: #085041; }
+.paid-badge.unpaid  { background: var(--surface3); color: var(--text3); }
+.paid-badge:hover   { opacity: .8; }
+
+/* Row strikethrough when paid */
+.exp-row-paid td { opacity: .55; }
+.exp-row-paid .exp-name-text { text-decoration: line-through; }

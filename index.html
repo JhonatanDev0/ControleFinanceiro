@@ -14,45 +14,23 @@
 </head>
 <body>
 
-  <!-- ========= SIDEBAR ========= -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="sidebar-brand">
         <div class="brand-logo"><i class="ti ti-currency-dollar"></i></div>
         <span class="brand-text">Financeiro</span>
       </div>
-
     </div>
-
     <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-page="dashboard" title="Dashboard">
-        <i class="ti ti-layout-dashboard nav-icon"></i>
-        <span class="nav-label">Dashboard</span>
-      </a>
-      <a href="#" class="nav-item" data-page="contas" title="Contas">
-        <i class="ti ti-receipt nav-icon"></i>
-        <span class="nav-label">Contas</span>
-      </a>
-      <a href="#" class="nav-item" data-page="metas" title="Metas">
-        <i class="ti ti-target nav-icon"></i>
-        <span class="nav-label">Metas</span>
-      </a>
-      <a href="#" class="nav-item" data-page="historico" title="Histórico">
-        <i class="ti ti-calendar-stats nav-icon"></i>
-        <span class="nav-label">Histórico</span>
-      </a>
+      <a href="#" class="nav-item active" data-page="dashboard" title="Dashboard"><i class="ti ti-layout-dashboard nav-icon"></i><span class="nav-label">Dashboard</span></a>
+      <a href="#" class="nav-item" data-page="contas" title="Contas"><i class="ti ti-receipt nav-icon"></i><span class="nav-label">Contas</span></a>
+      <a href="#" class="nav-item" data-page="metas" title="Metas"><i class="ti ti-target nav-icon"></i><span class="nav-label">Metas</span></a>
+      <a href="#" class="nav-item" data-page="historico" title="Histórico"><i class="ti ti-calendar-stats nav-icon"></i><span class="nav-label">Histórico</span></a>
     </nav>
-
     <div class="sidebar-footer">
       <div class="sidebar-actions">
-        <button class="sidebar-action-btn" onclick="exportData()">
-          <i class="ti ti-download"></i>
-          <span>Exportar dados</span>
-        </button>
-        <button class="sidebar-action-btn" onclick="document.getElementById('importInput').click()">
-          <i class="ti ti-upload"></i>
-          <span>Importar dados</span>
-        </button>
+        <button class="sidebar-action-btn" onclick="exportData()"><i class="ti ti-download"></i><span>Exportar dados</span></button>
+        <button class="sidebar-action-btn" onclick="document.getElementById('importInput').click()"><i class="ti ti-upload"></i><span>Importar dados</span></button>
         <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/>
       </div>
       <div class="sidebar-profile">
@@ -65,23 +43,17 @@
     </div>
   </aside>
 
-  <!-- ========= MOBILE TOPBAR ========= -->
   <header class="mobile-topbar d-flex d-lg-none">
     <div class="d-flex align-items-center gap-2">
       <div class="brand-logo-sm"><i class="ti ti-currency-dollar"></i></div>
       <span class="brand-text-sm">Financeiro</span>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <button class="mobile-action-btn" onclick="exportData()" title="Exportar dados">
-        <i class="ti ti-download"></i>
-      </button>
-      <button class="mobile-action-btn" onclick="document.getElementById('importInput').click()" title="Importar dados">
-        <i class="ti ti-upload"></i>
-      </button>
+      <button class="mobile-action-btn" onclick="exportData()" title="Exportar dados"><i class="ti ti-download"></i></button>
+      <button class="mobile-action-btn" onclick="document.getElementById('importInput').click()" title="Importar dados"><i class="ti ti-upload"></i></button>
     </div>
   </header>
 
-  <!-- BOTTOM NAV (mobile) -->
   <nav class="bottom-nav d-flex d-lg-none">
     <a href="#" class="bnav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span>Início</span></a>
     <a href="#" class="bnav-item" data-page="contas"><i class="ti ti-receipt"></i><span>Contas</span></a>
@@ -89,182 +61,96 @@
     <a href="#" class="bnav-item" data-page="historico"><i class="ti ti-calendar-stats"></i><span>Histórico</span></a>
   </nav>
 
-  <!-- ========= MAIN ========= -->
   <main class="main-content" id="mainContent">
 
-    <!-- ===== DASHBOARD ===== -->
+    <!-- DASHBOARD -->
     <section id="page-dashboard" class="page active">
-      <!-- Hero welcome card -->
       <div class="hero-welcome mb-4">
         <div class="hero-welcome-text">
           <p class="hero-eyebrow"><i class="ti ti-sun"></i> Bom dia!</p>
           <h2 class="hero-title">Aqui está seu resumo financeiro</h2>
           <p class="hero-sub" id="dash-subtitle">Carregando…</p>
         </div>
-        <div class="hero-welcome-img">
-          <img src="assets/hero.png" alt="Ilustração financeira"/>
-        </div>
+        <div class="hero-welcome-img"><img src="assets/hero.png" alt="Ilustração financeira"/></div>
       </div>
-
-      <!-- KPI Cards -->
       <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-green">
-            <div class="kpi-icon"><i class="ti ti-cash"></i></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Total do mês</div>
-              <div class="kpi-value" id="dash-total">R$ 0,00</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-blue">
-            <div class="kpi-icon"><i class="ti ti-file-invoice"></i></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Contas ativas</div>
-              <div class="kpi-value" id="dash-active">0</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-purple">
-            <div class="kpi-icon"><i class="ti ti-target"></i></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Metas em andamento</div>
-              <div class="kpi-value" id="dash-goals">0</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-neutral">
-            <div class="kpi-icon"><i class="ti ti-circle-off"></i></div>
-            <div class="kpi-body">
-              <div class="kpi-label">Contas zeradas</div>
-              <div class="kpi-value" id="dash-zero">0</div>
-            </div>
-          </div>
-        </div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-green"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total do mês</div><div class="kpi-value" id="dash-total">R$ 0,00</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-blue"><div class="kpi-icon"><i class="ti ti-file-invoice"></i></div><div class="kpi-body"><div class="kpi-label">Contas ativas</div><div class="kpi-value" id="dash-active">0</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-purple"><div class="kpi-icon"><i class="ti ti-target"></i></div><div class="kpi-body"><div class="kpi-label">Metas em andamento</div><div class="kpi-value" id="dash-goals">0</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-circle-off"></i></div><div class="kpi-body"><div class="kpi-label">Contas zeradas</div><div class="kpi-value" id="dash-zero">0</div></div></div></div>
       </div>
-
       <div class="row g-3">
-        <!-- History chart -->
-        <div class="col-12 col-lg-7">
-          <div class="panel">
-            <div class="panel-header">
-              <i class="ti ti-chart-bar panel-icon"></i>
-              <span class="panel-title">Histórico mensal</span>
-            </div>
-            <div class="chart-wrap"><canvas id="chart-history"></canvas></div>
-          </div>
-        </div>
-        <!-- Category breakdown -->
-        <div class="col-12 col-lg-5">
-          <div class="panel h-100">
-            <div class="panel-header">
-              <i class="ti ti-tag panel-icon"></i>
-              <span class="panel-title">Por categoria</span>
-            </div>
-            <div id="cat-breakdown"></div>
-          </div>
-        </div>
+        <div class="col-12 col-lg-7"><div class="panel"><div class="panel-header"><i class="ti ti-chart-bar panel-icon"></i><span class="panel-title">Histórico mensal</span></div><div class="chart-wrap"><canvas id="chart-history"></canvas></div></div></div>
+        <div class="col-12 col-lg-5"><div class="panel h-100"><div class="panel-header"><i class="ti ti-tag panel-icon"></i><span class="panel-title">Por categoria</span></div><div id="cat-breakdown"></div></div></div>
       </div>
     </section>
 
-    <!-- ===== CONTAS ===== -->
+    <!-- CONTAS -->
     <section id="page-contas" class="page">
       <div class="page-header">
-        <div class="page-header-info">
-          <h1 class="page-title"><i class="ti ti-receipt"></i> Contas</h1>
-          <p class="page-subtitle" id="contas-subtitle">Gerencie suas despesas</p>
+        <div class="page-header-info"><h1 class="page-title"><i class="ti ti-receipt"></i> Contas</h1><p class="page-subtitle" id="contas-subtitle">Gerencie suas despesas</p></div>
+        <button class="btn-action" onclick="openAddModal()"><i class="ti ti-plus"></i><span>Nova conta</span></button>
+      </div>
+      <div class="totals-scroll mb-3">
+        <div class="totals-inner">
+          <div class="kpi-card kpi-green kpi-compact"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total geral</div><div class="kpi-value" id="contas-total">R$ 0,00</div></div></div>
+          <div class="kpi-card kpi-blue kpi-compact"><div class="kpi-icon"><i class="ti ti-user"></i></div><div class="kpi-body"><div class="kpi-label">Jhonatan</div><div class="kpi-value" id="contas-total-j">R$ 0,00</div></div></div>
+          <div class="kpi-card kpi-pink kpi-compact"><div class="kpi-icon"><i class="ti ti-user-heart"></i></div><div class="kpi-body"><div class="kpi-label">Camila</div><div class="kpi-value" id="contas-total-c">R$ 0,00</div></div></div>
         </div>
-        <button class="btn-action" onclick="openAddModal()">
-          <i class="ti ti-plus"></i><span>Nova conta</span>
-        </button>
       </div>
-
-      <div class="filter-bar mb-3">
-        <button class="filter-pill active" data-cat="all"><i class="ti ti-layout-grid"></i> Todas</button>
-        <button class="filter-pill" data-cat="moradia"><i class="ti ti-home"></i> Moradia</button>
-        <button class="filter-pill" data-cat="cartoes"><i class="ti ti-credit-card"></i> Cartões</button>
-        <button class="filter-pill" data-cat="servicos"><i class="ti ti-wifi"></i> Serviços</button>
-        <button class="filter-pill" data-cat="educacao"><i class="ti ti-school"></i> Educação</button>
-        <button class="filter-pill" data-cat="outros"><i class="ti ti-box"></i> Outros</button>
+      <div class="filters-wrap mb-3">
+        <div class="filter-bar mb-2">
+          <button class="filter-pill active" data-cat="all"><i class="ti ti-layout-grid"></i> Todas</button>
+          <button class="filter-pill" data-cat="moradia"><i class="ti ti-home"></i> Moradia</button>
+          <button class="filter-pill" data-cat="cartoes"><i class="ti ti-credit-card"></i> Cartões</button>
+          <button class="filter-pill" data-cat="servicos"><i class="ti ti-wifi"></i> Serviços</button>
+          <button class="filter-pill" data-cat="educacao"><i class="ti ti-school"></i> Educação</button>
+          <button class="filter-pill" data-cat="outros"><i class="ti ti-box"></i> Outros</button>
+        </div>
+        <div class="filter-bar">
+          <button class="filter-pill person-pill active" data-person="all"><i class="ti ti-users"></i> Todos</button>
+          <button class="filter-pill person-pill" data-person="jhonatan"><i class="ti ti-user"></i> Jhonatan</button>
+          <button class="filter-pill person-pill" data-person="camila"><i class="ti ti-user-heart"></i> Camila</button>
+        </div>
       </div>
-
       <div class="panel p-0">
-        <!-- Desktop table -->
         <table class="data-table d-none d-md-table" id="exp-table">
-          <thead>
-            <tr>
-              <th><i class="ti ti-file-text"></i> Conta</th>
-              <th><i class="ti ti-tag"></i> Categoria</th>
-              <th><i class="ti ti-user"></i> Pessoa</th>
-              <th class="text-end"><i class="ti ti-coin"></i> Valor</th>
-              <th class="text-end"><i class="ti ti-settings"></i> Ações</th>
-            </tr>
-          </thead>
+          <thead><tr><th><i class="ti ti-file-text"></i> Conta</th><th><i class="ti ti-tag"></i> Categoria</th><th><i class="ti ti-user"></i> Pessoa</th><th><i class="ti ti-calendar-due"></i> Vencimento</th><th class="text-end"><i class="ti ti-coin"></i> Valor</th><th class="text-end"><i class="ti ti-settings"></i> Ações</th></tr></thead>
           <tbody id="exp-tbody"></tbody>
         </table>
-        <!-- Mobile cards -->
         <div class="exp-cards d-md-none" id="exp-cards"></div>
       </div>
     </section>
 
-    <!-- ===== METAS ===== -->
+    <!-- METAS -->
     <section id="page-metas" class="page">
       <div class="page-header">
-        <div class="page-header-info">
-          <h1 class="page-title"><i class="ti ti-target"></i> Metas</h1>
-          <p class="page-subtitle">Acompanhe seus objetivos financeiros</p>
-        </div>
-        <button class="btn-action" onclick="openMetaModal()">
-          <i class="ti ti-plus"></i><span>Nova meta</span>
-        </button>
+        <div class="page-header-info"><h1 class="page-title"><i class="ti ti-target"></i> Metas</h1><p class="page-subtitle">Acompanhe seus objetivos financeiros</p></div>
+        <button class="btn-action" onclick="openMetaModal()"><i class="ti ti-plus"></i><span>Nova meta</span></button>
       </div>
-
       <div id="metas-summary" class="row g-3 mb-4"></div>
       <div id="metas-grid" class="row g-3"></div>
     </section>
 
-    <!-- ===== HISTÓRICO ===== -->
+    <!-- HISTÓRICO -->
     <section id="page-historico" class="page">
       <div class="page-header">
-        <div class="page-header-info">
-          <h1 class="page-title"><i class="ti ti-calendar-stats"></i> Histórico</h1>
-          <p class="page-subtitle">Evolução mês a mês</p>
-        </div>
+        <div class="page-header-info"><h1 class="page-title"><i class="ti ti-calendar-stats"></i> Histórico</h1><p class="page-subtitle">Evolução mês a mês</p></div>
         <div class="month-nav-ctrl">
           <button class="month-nav-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
           <span id="hist-month-lbl" class="month-nav-label">Mai 2026</span>
           <button class="month-nav-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
         </div>
       </div>
-
       <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-green"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total</div><div class="kpi-value" id="hist-total">R$ 0,00</div></div></div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-blue"><div class="kpi-icon"><i class="ti ti-list-check"></i></div><div class="kpi-body"><div class="kpi-label">Contas</div><div class="kpi-value" id="hist-count">0</div></div></div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-purple"><div class="kpi-icon"><i class="ti ti-arrow-up"></i></div><div class="kpi-body"><div class="kpi-label">Maior gasto</div><div class="kpi-value fs-6 lh-sm" id="hist-biggest">—</div></div></div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-exchange"></i></div><div class="kpi-body"><div class="kpi-label">Vs. mês anterior</div><div class="kpi-value fs-6" id="hist-diff">—</div></div></div>
-        </div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-green"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total</div><div class="kpi-value" id="hist-total">R$ 0,00</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-blue"><div class="kpi-icon"><i class="ti ti-list-check"></i></div><div class="kpi-body"><div class="kpi-label">Contas</div><div class="kpi-value" id="hist-count">0</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-purple"><div class="kpi-icon"><i class="ti ti-arrow-up"></i></div><div class="kpi-body"><div class="kpi-label">Maior gasto</div><div class="kpi-value fs-6 lh-sm" id="hist-biggest">—</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-exchange"></i></div><div class="kpi-body"><div class="kpi-label">Vs. mês anterior</div><div class="kpi-value fs-6" id="hist-diff">—</div></div></div></div>
       </div>
-
       <div class="panel p-0">
         <table class="data-table d-none d-md-table">
-          <thead>
-            <tr>
-              <th><i class="ti ti-file-text"></i> Conta</th>
-              <th><i class="ti ti-tag"></i> Categoria</th>
-              <th><i class="ti ti-user"></i> Pessoa</th>
-              <th class="text-end"><i class="ti ti-coin"></i> Valor</th>
-            </tr>
-          </thead>
+          <thead><tr><th><i class="ti ti-file-text"></i> Conta</th><th><i class="ti ti-tag"></i> Categoria</th><th><i class="ti ti-user"></i> Pessoa</th><th class="text-end"><i class="ti ti-coin"></i> Valor</th></tr></thead>
           <tbody id="hist-tbody"></tbody>
         </table>
         <div class="exp-cards d-md-none" id="hist-cards"></div>
@@ -273,96 +159,68 @@
 
   </main>
 
-  <!-- ===== MODAL CONTA ===== -->
+  <!-- MODAL CONTA -->
   <div class="modal fade" id="expModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content app-modal">
-        <div class="modal-header">
-          <div class="modal-icon-wrap green"><i class="ti ti-receipt"></i></div>
-          <h5 class="modal-title" id="modal-title">Nova conta</h5>
-          <button class="modal-close-btn" data-bs-dismiss="modal"><i class="ti ti-x"></i></button>
-        </div>
+        <div class="modal-header"><div class="modal-icon-wrap green"><i class="ti ti-receipt"></i></div><h5 class="modal-title" id="modal-title">Nova conta</h5><button class="modal-close-btn" data-bs-dismiss="modal"><i class="ti ti-x"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="modal-id"/>
-          <div class="field-group">
-            <label class="field-label"><i class="ti ti-pencil"></i> Nome da conta</label>
-            <input type="text" class="field-input" id="modal-name" placeholder="ex: Nubank, Aluguel…"/>
-          </div>
-          <div class="field-group">
-            <label class="field-label"><i class="ti ti-tag"></i> Categoria</label>
-            <select class="field-input" id="modal-cat">
-              <option value="moradia">🏠 Moradia</option>
-              <option value="cartoes">💳 Cartões</option>
-              <option value="servicos">📡 Serviços</option>
-              <option value="educacao">🎓 Educação</option>
-              <option value="outros">📦 Outros</option>
-            </select>
-          </div>
+          <div class="field-group"><label class="field-label"><i class="ti ti-pencil"></i> Nome da conta</label><input type="text" class="field-input" id="modal-name" placeholder="ex: Nubank, Aluguel…"/></div>
+          <div class="field-group"><label class="field-label"><i class="ti ti-tag"></i> Categoria</label><select class="field-input" id="modal-cat"><option value="moradia">Moradia</option><option value="cartoes">Cartões</option><option value="servicos">Serviços</option><option value="educacao">Educação</option><option value="outros">Outros</option></select></div>
           <div class="field-group">
             <label class="field-label"><i class="ti ti-user"></i> Lançado por</label>
             <div class="person-selector">
-              <label class="person-option">
-                <input type="radio" name="modal-person" value="jhonatan" checked/>
-                <span class="person-btn person-j">👨 Jhonatan</span>
-              </label>
-              <label class="person-option">
-                <input type="radio" name="modal-person" value="camila"/>
-                <span class="person-btn person-c">👩 Camila</span>
-              </label>
+              <label class="person-option"><input type="radio" name="modal-person" value="jhonatan" checked/><span class="person-btn person-j"><i class="ti ti-user"></i> Jhonatan</span></label>
+              <label class="person-option"><input type="radio" name="modal-person" value="camila"/><span class="person-btn person-c"><i class="ti ti-user-heart"></i> Camila</span></label>
             </div>
           </div>
-          <div class="field-group mb-0">
-            <label class="field-label"><i class="ti ti-currency-dollar"></i> Valor (R$)</label>
-            <input type="text" class="field-input" id="modal-val" placeholder="0,00" inputmode="decimal"/>
+          <div class="field-group mb-0"><label class="field-label"><i class="ti ti-currency-dollar"></i> Valor (R$)</label><input type="text" class="field-input" id="modal-val" placeholder="0,00" inputmode="decimal"/></div>
+          <div class="row g-2 mt-1">
+            <div class="col-7">
+              <div class="field-group mb-0">
+                <label class="field-label"><i class="ti ti-calendar-due"></i> Vencimento</label>
+                <input type="date" class="field-input" id="modal-due"/>
+              </div>
+            </div>
+            <div class="col-5">
+              <div class="field-group mb-0">
+                <label class="field-label"><i class="ti ti-circle-check"></i> Status</label>
+                <div class="paid-toggle-wrap">
+                  <label class="paid-toggle">
+                    <input type="checkbox" id="modal-paid" onchange="updatePaidLabel(this)"/>
+                    <span class="paid-toggle-track"><span class="paid-toggle-thumb"></span></span>
+                    <span class="paid-toggle-label" id="paid-label">Pendente</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-          <button class="btn-modal-save" onclick="saveExp()"><i class="ti ti-check"></i> Salvar</button>
-        </div>
+        <div class="modal-footer"><button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button><button class="btn-modal-save" onclick="saveExp()"><i class="ti ti-check"></i> Salvar</button></div>
       </div>
     </div>
   </div>
 
-  <!-- ===== MODAL META ===== -->
+  <!-- MODAL META -->
   <div class="modal fade" id="metaModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content app-modal">
-        <div class="modal-header">
-          <div class="modal-icon-wrap purple"><i class="ti ti-target"></i></div>
-          <h5 class="modal-title" id="meta-modal-title">Nova meta</h5>
-          <button class="modal-close-btn" data-bs-dismiss="modal"><i class="ti ti-x"></i></button>
-        </div>
+        <div class="modal-header"><div class="modal-icon-wrap purple"><i class="ti ti-target"></i></div><h5 class="modal-title" id="meta-modal-title">Nova meta</h5><button class="modal-close-btn" data-bs-dismiss="modal"><i class="ti ti-x"></i></button></div>
         <div class="modal-body">
           <input type="hidden" id="meta-modal-id"/>
-          <div class="field-group">
-            <label class="field-label"><i class="ti ti-pencil"></i> Nome da meta</label>
-            <input type="text" class="field-input" id="meta-modal-name" placeholder="ex: Reserva de emergência…"/>
-          </div>
+          <div class="field-group"><label class="field-label"><i class="ti ti-pencil"></i> Nome da meta</label><input type="text" class="field-input" id="meta-modal-name" placeholder="ex: Reserva de emergência…"/></div>
           <div class="row g-3">
-            <div class="col-6">
-              <div class="field-group mb-0">
-                <label class="field-label"><i class="ti ti-flag"></i> Valor alvo (R$)</label>
-                <input type="text" class="field-input" id="meta-modal-target" placeholder="5.000,00"/>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="field-group mb-0">
-                <label class="field-label"><i class="ti ti-wallet"></i> Valor atual (R$)</label>
-                <input type="text" class="field-input" id="meta-modal-current" placeholder="0,00"/>
-              </div>
-            </div>
+            <div class="col-6"><div class="field-group mb-0"><label class="field-label"><i class="ti ti-flag"></i> Valor alvo (R$)</label><input type="text" class="field-input" id="meta-modal-target" placeholder="5.000,00"/></div></div>
+            <div class="col-6"><div class="field-group mb-0"><label class="field-label"><i class="ti ti-wallet"></i> Valor atual (R$)</label><input type="text" class="field-input" id="meta-modal-current" placeholder="0,00"/></div></div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-          <button class="btn-modal-save purple" onclick="saveMeta()"><i class="ti ti-check"></i> Salvar</button>
-        </div>
+        <div class="modal-footer"><button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button><button class="btn-modal-save purple" onclick="saveMeta()"><i class="ti ti-check"></i> Salvar</button></div>
       </div>
     </div>
   </div>
 
-  <!-- ===== MODAL DELETE ===== -->
+  <!-- MODAL DELETE -->
   <div class="modal fade" id="delModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content app-modal text-center">
@@ -371,10 +229,7 @@
           <h5 class="mt-3 mb-1" style="font-weight:600">Remover?</h5>
           <p id="del-name-lbl" style="font-size:14px;color:var(--text2);margin:0">Esta ação não pode ser desfeita.</p>
         </div>
-        <div class="modal-footer justify-content-center gap-2">
-          <button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-          <button class="btn-modal-danger" id="del-confirm-btn">Remover</button>
-        </div>
+        <div class="modal-footer justify-content-center gap-2"><button class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button><button class="btn-modal-danger" id="del-confirm-btn">Remover</button></div>
       </div>
     </div>
   </div>
@@ -383,15 +238,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="js/app.js"></script>
 
-  <!-- Toast -->
   <div class="toast-wrap" id="toastWrap">
-    <div class="app-toast" id="appToast">
-      <i class="ti ti-check-circle" id="toastIcon"></i>
-      <span id="toastMsg">Dados exportados!</span>
-    </div>
+    <div class="app-toast" id="appToast"><i class="ti ti-check-circle" id="toastIcon"></i><span id="toastMsg">Dados exportados!</span></div>
   </div>
 
-  <!-- Import confirm modal -->
+  <!-- MODAL IMPORT -->
   <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content app-modal text-center">
