@@ -75,17 +75,29 @@ const catColor = cat  => CATEGORIES[cat]?.color || '#888';
 
 /* ---- Storage ---- */
 function loadData() {
-  try { allData = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || {}; } catch { allData = {}; }
-  try { metas   = JSON.parse(localStorage.getItem(METAS_KEY))    || []; } catch { metas   = []; }
+  const rawExpenses = localStorage.getItem(EXPENSES_KEY);
+  const rawMetas    = localStorage.getItem(METAS_KEY);
+
+  // Se a chave nunca existiu, é a primeira vez — carrega os padrões
+  // Se existiu (mesmo vazia), respeita o que o usuário salvou
+  if (rawExpenses === null) {
+    allData = {};
+    const now = new Date();
+    curMonth  = monthKey(now.getFullYear(), now.getMonth());
+    allData[curMonth] = DEFAULT_EXPENSES.map(e => ({ ...e }));
+  } else {
+    try { allData = JSON.parse(rawExpenses) || {}; } catch { allData = {}; }
+  }
+
+  if (rawMetas === null) {
+    metas = DEFAULT_METAS.map(m => ({ ...m }));
+  } else {
+    try { metas = JSON.parse(rawMetas) || []; } catch { metas = []; }
+  }
 
   const now = new Date();
   curMonth  = monthKey(now.getFullYear(), now.getMonth());
   histMonth = curMonth;
-
-  if (!allData[curMonth] || !allData[curMonth].length) {
-    allData[curMonth] = DEFAULT_EXPENSES.map(e => ({ ...e }));
-  }
-  if (!metas.length) metas = DEFAULT_METAS.map(m => ({ ...m }));
 
   saveData();
 }
