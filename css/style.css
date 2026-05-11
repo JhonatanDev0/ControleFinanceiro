@@ -357,6 +357,8 @@ body {
   display: flex; align-items: center; gap: 12px;
   border: 1px solid transparent;
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  min-width: 0;
 }
 
 .kpi-icon {
@@ -365,8 +367,30 @@ body {
   font-size: 22px; flex-shrink: 0;
 }
 
-.kpi-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-.kpi-value { font-size: 1.35rem; font-weight: 700; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; line-height: 1; }
+.kpi-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.kpi-label {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-value {
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  font-size: clamp(0.85rem, 2.5vw, 1.35rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .kpi-green  { background: var(--green-dark); color: #fff; }
 .kpi-green .kpi-icon { background: rgba(255,255,255,.15); color: #fff; }
