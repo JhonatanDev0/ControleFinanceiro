@@ -1077,3 +1077,20 @@ body {
   box-shadow: none;
 }
 .btn-action-secondary:hover { background: var(--surface2); color: var(--text); }
+
+/* Upcoming section labels */
+.upcoming-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 1.25rem;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text3);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.upcoming-section-label.overdue-label { color: #DC2626; background: #FEF2F2; }
+[data-theme="dark"] .upcoming-section-label.overdue-label { background: #2D1515; }

@@ -147,6 +147,12 @@ function renderUpcoming() {
   const today = new Date(); today.setHours(0,0,0,0);
   const in7   = new Date(today); in7.setDate(in7.getDate() + 7);
 
+  const overdue  = exp
+    .filter(e => e.dueDate && !e.paid)
+    .map(e => ({ ...e, _due: new Date(e.dueDate + 'T00:00:00') }))
+    .filter(e => e._due < today)
+    .sort((a, b) => a._due - b._due);
+
   const upcoming = exp
     .filter(e => e.dueDate && !e.paid)
     .map(e => ({ ...e, _due: new Date(e.dueDate + 'T00:00:00') }))
@@ -156,22 +162,45 @@ function renderUpcoming() {
   const panel = document.getElementById('upcoming-panel');
   const list  = document.getElementById('upcoming-list');
 
-  if (!upcoming.length) { panel.style.display = 'none'; return; }
+  if (!overdue.length && !upcoming.length) { panel.style.display = 'none'; return; }
   panel.style.display = '';
 
-  list.innerHTML = upcoming.map(e => {
-    const diff  = Math.ceil((e._due - today) / 86400000);
-    const label = diff === 0 ? 'Hoje!' : diff === 1 ? 'Amanhã' : `Em ${diff} dias`;
-    const cls   = diff === 0 ? 'overdue' : diff <= 2 ? 'soon' : 'ok';
-    return `<div class="upcoming-item">
-      <div class="upcoming-dot" style="background:${catColor(e.category)}"></div>
-      <span class="upcoming-name">${e.name}</span>
-      <div class="upcoming-right">
-        <span class="due-badge ${cls}"><i class="ti ti-clock"></i> ${label}</span>
-        <span class="upcoming-val ${e.value === 0 ? 'val-zero' : ''}">${fmt(e.value)}</span>
-      </div>
-    </div>`;
-  }).join('');
+  const overdueHtml = overdue.length ? `
+    <div class="upcoming-section-label overdue-label">
+      <i class="ti ti-alert-circle"></i> Vencidas (${overdue.length})
+    </div>
+    ${overdue.map(e => {
+      const days = Math.abs(Math.ceil((e._due - today) / 86400000));
+      const label = days === 0 ? 'Hoje' : days === 1 ? 'Há 1 dia' : `Há ${days} dias`;
+      return `<div class="upcoming-item">
+        <div class="upcoming-dot" style="background:${catColor(e.category)}"></div>
+        <span class="upcoming-name">${e.name}</span>
+        <div class="upcoming-right">
+          <span class="due-badge overdue"><i class="ti ti-alert-circle"></i> ${label}</span>
+          <span class="upcoming-val ${e.value === 0 ? 'val-zero' : ''}">${fmt(e.value)}</span>
+        </div>
+      </div>`;
+    }).join('')}` : '';
+
+  const upcomingHtml = upcoming.length ? `
+    <div class="upcoming-section-label">
+      <i class="ti ti-clock"></i> Vencem em 7 dias (${upcoming.length})
+    </div>
+    ${upcoming.map(e => {
+      const diff  = Math.ceil((e._due - today) / 86400000);
+      const label = diff === 0 ? 'Hoje!' : diff === 1 ? 'Amanhã' : `Em ${diff} dias`;
+      const cls   = diff === 0 ? 'overdue' : diff <= 2 ? 'soon' : 'ok';
+      return `<div class="upcoming-item">
+        <div class="upcoming-dot" style="background:${catColor(e.category)}"></div>
+        <span class="upcoming-name">${e.name}</span>
+        <div class="upcoming-right">
+          <span class="due-badge ${cls}"><i class="ti ti-clock"></i> ${label}</span>
+          <span class="upcoming-val ${e.value === 0 ? 'val-zero' : ''}">${fmt(e.value)}</span>
+        </div>
+      </div>`;
+    }).join('')}` : '';
+
+  list.innerHTML = overdueHtml + upcomingHtml;
 }
 
 /* ============================================================
