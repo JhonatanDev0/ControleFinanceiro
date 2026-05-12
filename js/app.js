@@ -931,14 +931,52 @@ function importData(event) {
 
 function confirmImport() {
   if (!pendingImportData) return;
-  allData = pendingImportData.expenses;
-  metas   = pendingImportData.metas;
+
+  const imported = pendingImportData;
+
+  // Mesclar expenses por mês
+  const impExp = imported.expenses || {};
+  Object.keys(impExp).forEach(month => {
+    const existing = allData[month] || [];
+    const toAdd    = (Array.isArray(impExp[month]) ? impExp[month] : Object.values(impExp[month] || {}));
+    const maxId    = existing.length ? Math.max(...existing.map(e => e.id)) : 0;
+
+    // Adicionar apenas itens que não existem pelo nome+categoria no mesmo mês
+    const existingKeys = new Set(existing.map(e => `${e.name}|${e.category}`));
+    let nextId = maxId + 1;
+    const merged = [...existing];
+    toAdd.forEach(e => {
+      const key = `${e.name}|${e.category}`;
+      if (!existingKeys.has(key)) {
+        merged.push({ ...e, id: nextId++ });
+        existingKeys.add(key);
+      }
+    });
+
+    allData[month] = merged;
+  });
+
+  // Mesclar metas
+  const impMetas = Array.isArray(imported.metas)
+    ? imported.metas
+    : Object.values(imported.metas || {});
+  const existingMetaNames = new Set(metas.map(m => m.name));
+  const maxMetaId = metas.length ? Math.max(...metas.map(m => m.id)) : 0;
+  let nextMetaId  = maxMetaId + 1;
+  impMetas.forEach(m => {
+    if (!existingMetaNames.has(m.name)) {
+      metas.push({ ...m, id: nextMetaId++ });
+      existingMetaNames.add(m.name);
+    }
+  });
+
   persistAll();
   pendingImportData = null;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('importModal')).hide();
   navigateTo('dashboard');
-  showToast('Dados importados com sucesso!');
+  showToast('Dados mesclados com sucesso!');
 }
+
 
 function cancelImport() {
   pendingImportData = null;
