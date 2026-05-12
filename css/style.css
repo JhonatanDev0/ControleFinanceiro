@@ -1094,3 +1094,13 @@ body {
 }
 .upcoming-section-label.overdue-label { color: #DC2626; background: #FEF2F2; }
 [data-theme="dark"] .upcoming-section-label.overdue-label { background: #2D1515; }
+
+/* ---- Loading Spinner ---- */
+.loading-spinner {
+  width: 44px; height: 44px;
+  border: 4px solid rgba(255,255,255,.25);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -4,8 +4,6 @@
 'use strict';
 
 /* ---- Constants ---- */
-const EXPENSES_KEY = 'mf_expenses_v2';
-const METAS_KEY    = 'mf_metas_v2';
 
 const DEFAULT_EXPENSES = [
   { id:1,  name:'Nubank',      category:'cartoes',  value:1799.35, person:'jhonatan', dueDate:'2026-05-10', paid:false },
@@ -39,8 +37,9 @@ const META_COLORS = ['#1D9E75','#2D6BE4','#6C47E8','#E8874A','#D97706','#DC2626'
 /* ---- State ---- */
 let allData      = {};
 let metas        = [];
-let curMonth     = '';
-let histMonth    = '';
+const _now       = new Date();
+let curMonth     = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+let histMonth    = curMonth;
 let activeFilter  = 'all';
 let personFilter  = 'all';
 let searchQuery   = '';
@@ -75,42 +74,103 @@ const monthLabelShort = key => {
 const total    = list => list.reduce((s, e) => s + e.value, 0);
 const catColor = cat  => CATEGORIES[cat]?.color || '#888';
 
-/* ---- Storage ---- */
-function loadData() {
-  const rawExpenses = localStorage.getItem(EXPENSES_KEY);
-  const rawMetas    = localStorage.getItem(METAS_KEY);
+/* ---- Firebase Config ---- */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBVmc7pQIsw9g_ZdLnLS1Uy1TNW7QxWZDc",
+  authDomain:        "meufinanceiro-6d027.firebaseapp.com",
+  databaseURL:       "https://meufinanceiro-6d027-default-rtdb.firebaseio.com",
+  projectId:         "meufinanceiro-6d027",
+  storageBucket:     "meufinanceiro-6d027.firebasestorage.app",
+  messagingSenderId: "215194985969",
+  appId:             "1:215194985969:web:4b984fd287e5863e81d050"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  // Se a chave nunca existiu, é a primeira vez — carrega os padrões
-  // Se existiu (mesmo vazia), respeita o que o usuário salvou
-  if (rawExpenses === null) {
-    allData = {};
-    const now = new Date();
-    curMonth  = monthKey(now.getFullYear(), now.getMonth());
-    allData[curMonth] = DEFAULT_EXPENSES.map(e => ({ ...e }));
-  } else {
-    try { allData = JSON.parse(rawExpenses) || {}; } catch { allData = {}; }
-  }
-
-  if (rawMetas === null) {
-    metas = DEFAULT_METAS.map(m => ({ ...m }));
-  } else {
-    try { metas = JSON.parse(rawMetas) || []; } catch { metas = []; }
-  }
-
-  const now = new Date();
-  curMonth  = monthKey(now.getFullYear(), now.getMonth());
-  histMonth = curMonth;
-
-  saveData();
+/* ---- Firebase Helpers ---- */
+function objToArr(obj) {
+  if (!obj || typeof obj !== 'object') return [];
+  return Object.values(obj).filter(Boolean);
 }
 
-function saveData() {
-  localStorage.setItem(EXPENSES_KEY, JSON.stringify(allData));
-  localStorage.setItem(METAS_KEY, JSON.stringify(metas));
+function arrToObj(arr) {
+  const obj = {};
+  (arr || []).forEach(e => { if (e?.id != null) obj[String(e.id)] = e; });
+  return obj;
 }
 
+/* ---- Storage (Firebase) ---- */
 function expOfMonth(key) { return allData[key] || []; }
-function setExpOfMonth(key, arr) { allData[key] = arr; saveData(); }
+
+function setExpOfMonth(key, arr) {
+  allData[key] = arr;
+  db.ref(`financeiro/expenses/${key}`).set(arrToObj(arr));
+}
+
+function persistMetas() {
+  db.ref('financeiro/metas').set(arrToObj(metas));
+}
+
+function persistAll() {
+  const expObj = {};
+  Object.keys(allData).forEach(month => {
+    expObj[month] = arrToObj(allData[month]);
+  });
+  db.ref('financeiro').set({ expenses: expObj, metas: arrToObj(metas) });
+}
+
+function renderCurrentPage() {
+  ['dashboard','contas','metas','historico'].forEach(p => {
+    if (document.getElementById('page-' + p)?.classList.contains('active')) {
+      if (p === 'dashboard') renderDashboard();
+      if (p === 'contas')    renderContas();
+      if (p === 'metas')     renderMetas();
+      if (p === 'historico') renderHistorico();
+    }
+  });
+}
+
+function showLoading() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function loadData() {
+  showLoading();
+  db.ref('financeiro').on('value', snapshot => {
+    const raw = snapshot.val();
+
+    if (!raw) {
+      // Primeira vez — seed com dados padrão
+      allData = { [curMonth]: DEFAULT_EXPENSES.map(e => ({...e})) };
+      metas   = DEFAULT_METAS.map(m => ({...m}));
+      persistAll();
+      return; // listener vai disparar novamente após o persistAll
+    }
+
+    // Carregar expenses
+    const rawExp = raw.expenses || {};
+    allData = {};
+    Object.keys(rawExp).forEach(month => {
+      allData[month] = objToArr(rawExp[month]);
+    });
+    if (!allData[curMonth]) allData[curMonth] = [];
+
+    // Carregar metas
+    metas = objToArr(raw.metas);
+
+    document.getElementById('sb-month').textContent = monthLabel(curMonth);
+    hideLoading();
+    renderCurrentPage();
+
+  }, () => {
+    hideLoading();
+    showToast('Erro ao conectar com o banco de dados.', true);
+  });
+}
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -701,7 +761,7 @@ function saveMeta() {
     const newId = metas.length ? Math.max(...metas.map(m => m.id)) + 1 : 1;
     metas.push({ id: newId, name, target, current });
   }
-  saveData();
+  persistMetas();
   metaModal().hide();
   renderMetas();
   if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
@@ -736,7 +796,7 @@ function confirmDel() {
     if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
   } else {
     metas = metas.filter(m => m.id !== pendingDelId);
-    saveData();
+    persistMetas();
     delModal().hide();
     renderMetas();
     if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
@@ -873,7 +933,7 @@ function confirmImport() {
   if (!pendingImportData) return;
   allData = pendingImportData.expenses;
   metas   = pendingImportData.metas;
-  saveData();
+  persistAll();
   pendingImportData = null;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('importModal')).hide();
   navigateTo('dashboard');
