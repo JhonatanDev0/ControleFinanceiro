@@ -111,7 +111,12 @@ function saveData() {
 function expOfMonth(key) { return allData[key] || []; }
 function setExpOfMonth(key, arr) { allData[key] = arr; saveData(); }
 
-/* ---- Modal helpers ---- */
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 6  && h < 12) return { text: 'Bom dia!',   icon: 'ti-sun' };
+  if (h >= 12 && h < 18) return { text: 'Boa tarde!',  icon: 'ti-sun-high' };
+  return                         { text: 'Boa noite!',  icon: 'ti-moon' };
+}
 const expModal  = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('expModal'));
 const metaModal = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('metaModal'));
 const delModal  = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('delModal'));
@@ -175,7 +180,9 @@ function navigateTo(page) {
 function renderDashboard() {
   const exp = expOfMonth(curMonth);
   const tot = total(exp);
+  const greeting = getGreeting();
 
+  document.querySelector('.hero-eyebrow').innerHTML = `<i class="ti ${greeting.icon}"></i> ${greeting.text}`;
   document.getElementById('dash-subtitle').textContent =
     fmt(tot) + ' em ' + monthLabel(curMonth);
   document.getElementById('dash-total').textContent  = fmt(tot);
