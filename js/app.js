@@ -42,7 +42,9 @@ let curMonth     = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2
 let histMonth    = curMonth;
 let activeFilter  = 'all';
 let personFilter  = 'all';
+let statusFilter  = 'all';
 let searchQuery   = '';
+let isDirty       = false;
 let pendingDelId = null;
 let pendingDelType = 'expense';
 let chartHistory = null;
@@ -164,6 +166,7 @@ function loadData() {
 
     document.getElementById('sb-month').textContent = monthLabel(curMonth);
     hideLoading();
+    checkRecurring();
     renderCurrentPage();
 
   }, () => {
@@ -181,6 +184,76 @@ function getGreeting() {
 const expModal  = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('expModal'));
 const metaModal = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('metaModal'));
 const delModal  = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('delModal'));
+
+/* ============================================================
+   DIRTY TRACKING
+   ============================================================ */
+function markDirty() { isDirty = true; }
+
+function forceCloseModal() {
+  isDirty = false;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('discardModal')).hide();
+  expModal().hide();
+}
+
+function updateRecurringLabel(cb) {
+  document.getElementById('recurring-label').textContent = cb.checked ? 'Sim' : 'Não';
+}
+
+/* ============================================================
+   RECURRING ACCOUNTS
+   ============================================================ */
+function checkRecurring() {
+  if (allData[curMonth] && allData[curMonth].length > 0) return;
+
+  const [y, m] = curMonth.split('-').map(Number);
+  const prevKey = monthKey(new Date(y, m - 2, 1).getFullYear(), new Date(y, m - 2, 1).getMonth());
+  const recurring = expOfMonth(prevKey).filter(e => e.recurring);
+  if (!recurring.length) return;
+
+  const seeded = recurring.map((e, i) => ({
+    ...e,
+    id:      i + 1,
+    paid:    false,
+    dueDate: e.dueDate ? curMonth + e.dueDate.slice(7) : '',
+  }));
+  setExpOfMonth(curMonth, seeded);
+  showToast(`${seeded.length} conta(s) recorrente(s) adicionadas para ${monthLabel(curMonth)}!`);
+}
+
+/* ============================================================
+   DASHBOARD COMPARISON
+   ============================================================ */
+function renderComparison() {
+  const [y, m] = curMonth.split('-').map(Number);
+  const prevKey = monthKey(new Date(y, m - 2, 1).getFullYear(), new Date(y, m - 2, 1).getMonth());
+
+  const curExp  = expOfMonth(curMonth);
+  const prevExp = expOfMonth(prevKey);
+  const curTot  = total(curExp);
+  const prevTot = total(prevExp);
+
+  document.getElementById('comp-cur-month').textContent  = monthLabel(curMonth);
+  document.getElementById('comp-prev-month').textContent = monthLabel(prevKey);
+  document.getElementById('comp-cur-total').textContent  = fmt(curTot);
+  document.getElementById('comp-prev-total').textContent = fmt(prevTot);
+
+  document.getElementById('comp-cur-j').textContent  = fmt(total(curExp.filter(e => e.person === 'jhonatan')));
+  document.getElementById('comp-cur-c').textContent  = fmt(total(curExp.filter(e => e.person === 'camila')));
+  document.getElementById('comp-prev-j').textContent = fmt(total(prevExp.filter(e => e.person === 'jhonatan')));
+  document.getElementById('comp-prev-c').textContent = fmt(total(prevExp.filter(e => e.person === 'camila')));
+
+  const badge = document.getElementById('comp-diff-badge');
+  if (prevTot === 0) {
+    badge.textContent = '—';
+    badge.className = 'comp-diff-badge comp-diff-zero';
+  } else {
+    const diff = curTot - prevTot;
+    const pct  = Math.round(Math.abs(diff) / prevTot * 100);
+    badge.textContent = (diff >= 0 ? '▲ +' : '▼ -') + pct + '%';
+    badge.className = 'comp-diff-badge ' + (diff > 0 ? 'comp-diff-up' : diff < 0 ? 'comp-diff-down' : 'comp-diff-zero');
+  }
+}
 
 /* ============================================================
    DARK MODE
@@ -346,8 +419,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Search input
-  const searchEl = document.getElementById('search-input');
+  // Status filter pills
+  document.querySelectorAll('.status-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.status-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      statusFilter = btn.dataset.status;
+      renderContas();
+    });
+  });
+
+  // Dirty tracking — intercept modal close
+  const expModalEl = document.getElementById('expModal');
+  expModalEl.addEventListener('hide.bs.modal', e => {
+    if (isDirty) {
+      e.preventDefault();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('discardModal')).show();
+    }
+  });
   if (searchEl) {
     searchEl.addEventListener('input', () => {
       searchQuery = searchEl.value.trim().toLowerCase();
@@ -395,6 +484,7 @@ function renderDashboard() {
   renderHistoryChart();
   renderCatBreakdown(exp);
   renderUpcoming();
+  renderComparison();
 }
 
 /* History Bar Chart */
@@ -533,6 +623,8 @@ function renderContas() {
   let filtered = exp;
   if (activeFilter !== 'all')  filtered = filtered.filter(e => e.category === activeFilter);
   if (personFilter !== 'all')  filtered = filtered.filter(e => e.person === personFilter);
+  if (statusFilter === 'paid')    filtered = filtered.filter(e => e.paid);
+  if (statusFilter === 'pending') filtered = filtered.filter(e => !e.paid);
   if (searchQuery)             filtered = filtered.filter(e => e.name.toLowerCase().includes(searchQuery));
 
   document.getElementById('contas-subtitle').textContent =
@@ -559,6 +651,7 @@ function renderContas() {
       <td><div class="name-cell">
         <div class="row-dot" style="background:${catColor(e.category)}"></div>
         <span class="exp-name-text">${e.name}</span>
+        ${e.recurring ? '<span class="recurring-badge"><i class="ti ti-refresh"></i> Recorrente</span>' : ''}
       </div></td>
       <td>${catBadge(e.category)}</td>
       <td>${personBadge(e.person)}</td>
@@ -566,7 +659,7 @@ function renderContas() {
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
       <td class="text-end">
         ${paidBtn(e.id, e.paid)}
-        <button class="tbl-btn" onclick="openEditModal(${e.id})" title="Editar"><i class="ti ti-pencil"></i></button>
+        <button class="tbl-btn" onclick="openEditModal(${e.id},'${curMonth}')" title="Editar"><i class="ti ti-pencil"></i></button>
         <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')" title="Remover"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
@@ -578,7 +671,7 @@ function renderContas() {
     return `<div class="exp-card-item ${e.paid ? 'exp-row-paid' : ''}">
       <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
       <div class="exp-card-info">
-        <div class="exp-card-name exp-name-text">${e.name}</div>
+        <div class="exp-card-name exp-name-text">${e.name} ${e.recurring ? '<span class="recurring-badge"><i class="ti ti-refresh"></i></span>' : ''}</div>
         <div class="exp-card-meta">
           ${catBadge(e.category)}
           ${personBadge(e.person)}
@@ -589,7 +682,7 @@ function renderContas() {
         <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
         <div class="exp-card-actions">
           ${paidBtn(e.id, e.paid)}
-          <button class="tbl-btn" onclick="openEditModal(${e.id})"><i class="ti ti-pencil"></i></button>
+          <button class="tbl-btn" onclick="openEditModal(${e.id},'${curMonth}')"><i class="ti ti-pencil"></i></button>
           <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')"><i class="ti ti-trash"></i></button>
         </div>
       </div>
@@ -599,29 +692,41 @@ function renderContas() {
 
 /* Add / Edit expense modal */
 function openAddModal() {
-  document.getElementById('modal-id').value   = '';
-  document.getElementById('modal-name').value = '';
-  document.getElementById('modal-cat').value  = 'moradia';
-  document.getElementById('modal-val').value  = '';
-  document.getElementById('modal-due').value  = '';
-  document.getElementById('modal-paid').checked = false;
-  document.getElementById('paid-label').textContent = 'Pendente';
+  isDirty = false;
+  document.getElementById('modal-id').value              = '';
+  document.getElementById('modal-original-month').value  = curMonth;
+  document.getElementById('modal-month').value           = curMonth;
+  document.getElementById('modal-name').value            = '';
+  document.getElementById('modal-cat').value             = 'moradia';
+  document.getElementById('modal-val').value             = '';
+  document.getElementById('modal-due').value             = '';
+  document.getElementById('modal-paid').checked          = false;
+  document.getElementById('modal-recurring').checked     = false;
+  document.getElementById('paid-label').textContent      = 'Pendente';
+  document.getElementById('recurring-label').textContent = 'Não';
   document.querySelectorAll('input[name="modal-person"]').forEach(r => { r.checked = r.value === 'jhonatan'; });
   document.getElementById('modal-title').textContent = 'Nova conta';
   expModal().show();
   setTimeout(() => document.getElementById('modal-name').focus(), 350);
 }
 
-function openEditModal(id) {
-  const e = expOfMonth(curMonth).find(x => x.id === id);
+function openEditModal(id, month) {
+  const m   = month || curMonth;
+  const exp = expOfMonth(m);
+  const e   = exp.find(x => x.id === id);
   if (!e) return;
-  document.getElementById('modal-id').value   = id;
-  document.getElementById('modal-name').value = e.name;
-  document.getElementById('modal-cat').value  = e.category;
-  document.getElementById('modal-val').value  = e.value.toFixed(2).replace('.', ',');
-  document.getElementById('modal-due').value  = e.dueDate || '';
-  document.getElementById('modal-paid').checked = !!e.paid;
-  document.getElementById('paid-label').textContent = e.paid ? 'Pago' : 'Pendente';
+  isDirty = false;
+  document.getElementById('modal-id').value              = id;
+  document.getElementById('modal-original-month').value  = m;
+  document.getElementById('modal-month').value           = m;
+  document.getElementById('modal-name').value            = e.name;
+  document.getElementById('modal-cat').value             = e.category;
+  document.getElementById('modal-val').value             = e.value.toFixed(2).replace('.', ',');
+  document.getElementById('modal-due').value             = e.dueDate || '';
+  document.getElementById('modal-paid').checked          = !!e.paid;
+  document.getElementById('modal-recurring').checked     = !!e.recurring;
+  document.getElementById('paid-label').textContent      = e.paid ? 'Pago' : 'Pendente';
+  document.getElementById('recurring-label').textContent = e.recurring ? 'Sim' : 'Não';
   document.querySelectorAll('input[name="modal-person"]').forEach(r => {
     r.checked = r.value === (e.person || 'jhonatan');
   });
@@ -630,25 +735,40 @@ function openEditModal(id) {
 }
 
 function saveExp() {
-  const id      = document.getElementById('modal-id').value;
-  const name    = document.getElementById('modal-name').value.trim();
-  const cat     = document.getElementById('modal-cat').value;
-  const value   = parseVal(document.getElementById('modal-val').value);
-  const person  = document.querySelector('input[name="modal-person"]:checked')?.value || 'jhonatan';
-  const dueDate = document.getElementById('modal-due').value;
-  const paid    = document.getElementById('modal-paid').checked;
+  const id           = document.getElementById('modal-id').value;
+  const origMonth    = document.getElementById('modal-original-month').value || curMonth;
+  const targetMonth  = document.getElementById('modal-month').value || curMonth;
+  const name         = document.getElementById('modal-name').value.trim();
+  const cat          = document.getElementById('modal-cat').value;
+  const value        = parseVal(document.getElementById('modal-val').value);
+  const person       = document.querySelector('input[name="modal-person"]:checked')?.value || 'jhonatan';
+  const dueDate      = document.getElementById('modal-due').value;
+  const paid         = document.getElementById('modal-paid').checked;
+  const recurring    = document.getElementById('modal-recurring').checked;
   if (!name) { document.getElementById('modal-name').focus(); return; }
 
-  let exp = expOfMonth(curMonth);
+  isDirty = false;
+
   if (id) {
-    exp = exp.map(e => e.id === +id ? { ...e, name, category: cat, value, person, dueDate, paid } : e);
+    if (origMonth !== targetMonth) {
+      // Remove from original month, add to target month
+      setExpOfMonth(origMonth, expOfMonth(origMonth).filter(e => e.id !== +id));
+      const tExp  = expOfMonth(targetMonth);
+      const newId = tExp.length ? Math.max(...tExp.map(e => e.id)) + 1 : 1;
+      setExpOfMonth(targetMonth, [...tExp, { id: newId, name, category: cat, value, person, dueDate, paid, recurring }]);
+    } else {
+      setExpOfMonth(targetMonth, expOfMonth(targetMonth).map(e =>
+        e.id === +id ? { ...e, name, category: cat, value, person, dueDate, paid, recurring } : e
+      ));
+    }
   } else {
+    const exp   = expOfMonth(targetMonth);
     const newId = exp.length ? Math.max(...exp.map(e => e.id)) + 1 : 1;
-    exp.push({ id: newId, name, category: cat, value, person, dueDate, paid });
+    setExpOfMonth(targetMonth, [...exp, { id: newId, name, category: cat, value, person, dueDate, paid, recurring }]);
   }
-  setExpOfMonth(curMonth, exp);
+
   expModal().hide();
-  renderContas();
+  if (targetMonth === curMonth || origMonth === curMonth) renderContas();
   if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
 }
 
