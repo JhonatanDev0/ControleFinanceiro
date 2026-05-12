@@ -43,6 +43,7 @@ let curMonth     = '';
 let histMonth    = '';
 let activeFilter  = 'all';
 let personFilter  = 'all';
+let searchQuery   = '';
 let pendingDelId = null;
 let pendingDelType = 'expense';
 let chartHistory = null;
@@ -122,12 +123,114 @@ const metaModal = () => bootstrap.Modal.getOrCreateInstance(document.getElementB
 const delModal  = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('delModal'));
 
 /* ============================================================
+   DARK MODE
+   ============================================================ */
+function applyDark(on) {
+  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
+  document.getElementById('dark-icon-sb').className = on ? 'ti ti-sun' : 'ti ti-moon';
+  document.getElementById('dark-icon-mb').className = on ? 'ti ti-sun' : 'ti ti-moon';
+  const lbl = document.getElementById('dark-label-sb');
+  if (lbl) lbl.textContent = on ? 'Modo claro' : 'Modo escuro';
+}
+
+function toggleDarkMode() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  applyDark(!isDark);
+  localStorage.setItem('mf_dark', isDark ? '0' : '1');
+}
+
+/* ============================================================
+   UPCOMING BILLS
+   ============================================================ */
+function renderUpcoming() {
+  const exp   = expOfMonth(curMonth);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7   = new Date(today); in7.setDate(in7.getDate() + 7);
+
+  const upcoming = exp
+    .filter(e => e.dueDate && !e.paid)
+    .map(e => ({ ...e, _due: new Date(e.dueDate + 'T00:00:00') }))
+    .filter(e => e._due >= today && e._due <= in7)
+    .sort((a, b) => a._due - b._due);
+
+  const panel = document.getElementById('upcoming-panel');
+  const list  = document.getElementById('upcoming-list');
+
+  if (!upcoming.length) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  list.innerHTML = upcoming.map(e => {
+    const diff  = Math.ceil((e._due - today) / 86400000);
+    const label = diff === 0 ? 'Hoje!' : diff === 1 ? 'Amanhã' : `Em ${diff} dias`;
+    const cls   = diff === 0 ? 'overdue' : diff <= 2 ? 'soon' : 'ok';
+    return `<div class="upcoming-item">
+      <div class="upcoming-dot" style="background:${catColor(e.category)}"></div>
+      <span class="upcoming-name">${e.name}</span>
+      <div class="upcoming-right">
+        <span class="due-badge ${cls}"><i class="ti ti-clock"></i> ${label}</span>
+        <span class="upcoming-val ${e.value === 0 ? 'val-zero' : ''}">${fmt(e.value)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  searchQuery = '';
+  document.getElementById('search-clear').style.display = 'none';
+  renderContas();
+}
+
+/* ============================================================
+   COPY PREVIOUS MONTH
+   ============================================================ */
+function copyPrevMonth() {
+  const [y, m] = curMonth.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1);
+  const prevKey  = monthKey(prevDate.getFullYear(), prevDate.getMonth());
+  const prevExp  = expOfMonth(prevKey);
+
+  if (!prevExp.length) { showToast('Nenhuma conta encontrada no mês anterior.', true); return; }
+
+  document.getElementById('copy-modal-desc').textContent =
+    `${prevExp.length} conta(s) de ${monthLabel(prevKey)} serão copiadas para ${monthLabel(curMonth)} com status pendente.`;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('copyModal')).show();
+}
+
+function confirmCopyPrev() {
+  const [y, m] = curMonth.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1);
+  const prevKey  = monthKey(prevDate.getFullYear(), prevDate.getMonth());
+  const prevExp  = expOfMonth(prevKey);
+  const current  = expOfMonth(curMonth);
+  const maxId    = current.length ? Math.max(...current.map(e => e.id)) : 0;
+  const copied   = prevExp.map((e, i) => ({ ...e, id: maxId + i + 1, paid: false }));
+  setExpOfMonth(curMonth, [...current, ...copied]);
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('copyModal')).hide();
+  renderContas();
+  showToast(`${copied.length} conta(s) copiadas com sucesso!`);
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
+  if (localStorage.getItem('mf_dark') === '1') applyDark(true);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   document.getElementById('sb-month').textContent = monthLabel(curMonth);
+
+  // Dark mode
+  if (localStorage.getItem('mf_dark') === '1') applyDark(true);
+
+  // PWA service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
 
   // Navigation
   document.querySelectorAll('[data-page]').forEach(el => {
@@ -153,6 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
       renderContas();
     });
   });
+
+  // Search input
+  const searchEl = document.getElementById('search-input');
+  if (searchEl) {
+    searchEl.addEventListener('input', () => {
+      searchQuery = searchEl.value.trim().toLowerCase();
+      document.getElementById('search-clear').style.display = searchQuery ? '' : 'none';
+      renderContas();
+    });
+  }
 
   navigateTo('dashboard');
 });
@@ -192,6 +305,7 @@ function renderDashboard() {
 
   renderHistoryChart();
   renderCatBreakdown(exp);
+  renderUpcoming();
 }
 
 /* History Bar Chart */
@@ -330,6 +444,7 @@ function renderContas() {
   let filtered = exp;
   if (activeFilter !== 'all')  filtered = filtered.filter(e => e.category === activeFilter);
   if (personFilter !== 'all')  filtered = filtered.filter(e => e.person === personFilter);
+  if (searchQuery)             filtered = filtered.filter(e => e.name.toLowerCase().includes(searchQuery));
 
   document.getElementById('contas-subtitle').textContent =
     filtered.length + ' conta' + (filtered.length !== 1 ? 's' : '') + ' · ' + monthLabel(curMonth);

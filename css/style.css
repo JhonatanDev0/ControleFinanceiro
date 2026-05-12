@@ -958,3 +958,122 @@ body {
 /* Row strikethrough when paid */
 .exp-row-paid td { opacity: .55; }
 .exp-row-paid .exp-name-text { text-decoration: line-through; }
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+[data-theme="dark"] {
+  --bg:        #0E1512;
+  --surface:   #172019;
+  --surface2:  #1C2A1E;
+  --surface3:  #223325;
+  --border:    #2A3D2D;
+  --border2:   #3A5040;
+  --text:      #E4EDE6;
+  --text2:     #8AAD90;
+  --text3:     #5A7A60;
+}
+
+[data-theme="dark"] .sidebar          { background: #0A1510; }
+[data-theme="dark"] .mobile-topbar   { background: #0A1510; }
+[data-theme="dark"] .bottom-nav      { background: #0A1510; }
+[data-theme="dark"] .offcanvas-dark  { background: #0A1510 !important; }
+[data-theme="dark"] .kpi-neutral     { background: var(--surface2); border-color: var(--border); }
+[data-theme="dark"] .app-modal       { background: var(--surface) !important; color: var(--text); }
+[data-theme="dark"] .modal-content   { background: var(--surface); }
+[data-theme="dark"] .field-input     { background: var(--surface2); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .field-input option { background: var(--surface2); }
+[data-theme="dark"] .btn-modal-cancel { background: var(--surface2); color: var(--text2); border-color: var(--border); }
+[data-theme="dark"] .filter-pill     { background: var(--surface); border-color: var(--border); color: var(--text2); }
+[data-theme="dark"] .month-nav-ctrl  { background: var(--surface); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .month-nav-btn   { color: var(--text2); }
+[data-theme="dark"] .data-table thead th { background: var(--surface2); }
+[data-theme="dark"] .data-table tbody tr:hover { background: var(--surface2); }
+[data-theme="dark"] .exp-card-item:active { background: var(--surface2); }
+
+/* ---- Dark mode toggle icon flip ---- */
+[data-theme="dark"] #dark-icon-sb,
+[data-theme="dark"] #dark-icon-mb { --ti-icon: "\ebb5"; /* ti-sun */ }
+[data-theme="dark"] #dark-label-sb { content: "Modo claro"; }
+
+/* ============================================================
+   SEARCH BAR
+   ============================================================ */
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  color: var(--text3);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 36px 9px 36px;
+  font-size: 14px;
+  font-family: 'Sora', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border .15s, box-shadow .15s;
+}
+
+.search-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(29,158,117,.12);
+}
+
+.search-input::placeholder { color: var(--text3); }
+
+.search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.search-clear:hover { color: var(--text); }
+
+/* ============================================================
+   UPCOMING BILLS PANEL
+   ============================================================ */
+.upcoming-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.upcoming-item:last-child { border-bottom: none; }
+.upcoming-item:hover { background: var(--surface2); }
+
+.upcoming-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.upcoming-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+.upcoming-right { display: flex; align-items: center; gap: 8px; }
+.upcoming-val { font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+/* ============================================================
+   SECONDARY ACTION BUTTON
+   ============================================================ */
+.btn-action-secondary {
+  background: var(--surface);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.btn-action-secondary:hover { background: var(--surface2); color: var(--text); }
