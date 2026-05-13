@@ -396,37 +396,6 @@ function applyAllocation() {
 /* ============================================================
    DASHBOARD COMPARISON
    ============================================================ */
-function renderComparison() {
-  const [y, m] = curMonth.split('-').map(Number);
-  const prevKey = monthKey(new Date(y, m - 2, 1).getFullYear(), new Date(y, m - 2, 1).getMonth());
-
-  const curExp  = expOfMonth(curMonth);
-  const prevExp = expOfMonth(prevKey);
-  const curTot  = total(curExp);
-  const prevTot = total(prevExp);
-
-  document.getElementById('comp-cur-month').textContent  = monthLabel(curMonth);
-  document.getElementById('comp-prev-month').textContent = monthLabel(prevKey);
-  document.getElementById('comp-cur-total').textContent  = fmt(curTot);
-  document.getElementById('comp-prev-total').textContent = fmt(prevTot);
-
-  document.getElementById('comp-cur-j').textContent  = fmt(total(curExp.filter(e => e.person === 'jhonatan')));
-  document.getElementById('comp-cur-c').textContent  = fmt(total(curExp.filter(e => e.person === 'camila')));
-  document.getElementById('comp-prev-j').textContent = fmt(total(prevExp.filter(e => e.person === 'jhonatan')));
-  document.getElementById('comp-prev-c').textContent = fmt(total(prevExp.filter(e => e.person === 'camila')));
-
-  const badge = document.getElementById('comp-diff-badge');
-  if (prevTot === 0) {
-    badge.textContent = '—';
-    badge.className = 'comp-diff-badge comp-diff-zero';
-  } else {
-    const diff = curTot - prevTot;
-    const pct  = Math.round(Math.abs(diff) / prevTot * 100);
-    badge.textContent = (diff >= 0 ? '▲ +' : '▼ -') + pct + '%';
-    badge.className = 'comp-diff-badge ' + (diff > 0 ? 'comp-diff-up' : diff < 0 ? 'comp-diff-down' : 'comp-diff-zero');
-  }
-}
-
 /* ============================================================
    DARK MODE
    ============================================================ */
@@ -571,30 +540,10 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('click', e => { e.preventDefault(); navigateTo(el.dataset.page); });
   });
 
-  // Category filter pills
-  document.querySelectorAll('.filter-pill:not(.person-pill)').forEach(btn => {
+  // Status segmented control
+  document.querySelectorAll('.seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-pill:not(.person-pill)').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter = btn.dataset.cat;
-      renderContas();
-    });
-  });
-
-  // Person filter pills
-  document.querySelectorAll('.person-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.person-pill').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      personFilter = btn.dataset.person;
-      renderContas();
-    });
-  });
-
-  // Status filter pills
-  document.querySelectorAll('.status-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.status-pill').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       statusFilter = btn.dataset.status;
       renderContas();
@@ -653,25 +602,22 @@ function renderDashboard() {
   document.getElementById('dash-goals').textContent  = metas.filter(m => m.current < m.target).length;
   document.getElementById('dash-zero').textContent   = exp.filter(e => e.value === 0).length;
 
-  renderHistoryChart();
-  renderCatBreakdown(exp);
   renderUpcoming();
-  renderComparison();
   renderSalaryCard();
   renderBalanceCard();
 }
 
 /* History Bar Chart */
-function renderHistoryChart() {
-  const now   = new Date();
+function renderHistoryChartFor(selectedMonth) {
+  const [y, m] = selectedMonth.split('-').map(Number);
   const months6 = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const d = new Date(y, m - 1 - (5 - i), 1);
     return monthKey(d.getFullYear(), d.getMonth());
   });
 
   const labels = months6.map(monthLabelShort);
   const values = months6.map(k => Math.round(total(allData[k] || []) * 100) / 100);
-  const colors = months6.map(k => k === curMonth ? '#1D9E75' : '#E1F5EE');
+  const colors = months6.map(k => k === selectedMonth ? '#1D9E75' : '#E1F5EE');
 
   const ctx = document.getElementById('chart-history')?.getContext('2d');
   if (!ctx) return;
@@ -680,34 +626,44 @@ function renderHistoryChart() {
 
   chartHistory = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        backgroundColor: colors,
-        borderRadius: 8,
-        borderSkipped: false,
-      }],
-    },
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 8, borderSkipped: false }] },
     options: {
       plugins: { legend: { display: false } },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: 'Sora', size: 11 }, color: '#96A89E' },
-          border: { display: false },
-        },
-        y: {
-          grid: { color: '#F0F4F1' },
-          ticks: {
-            font: { family: 'DM Mono', size: 11 }, color: '#96A89E',
-            callback: v => 'R$ ' + v.toLocaleString('pt-BR'),
-          },
-          border: { display: false },
-        },
+        x: { grid: { display: false }, ticks: { font: { family: 'Sora', size: 11 }, color: '#96A89E' }, border: { display: false } },
+        y: { grid: { color: '#F0F4F1' }, ticks: { font: { family: 'DM Mono', size: 11 }, color: '#96A89E', callback: v => 'R$ ' + v.toLocaleString('pt-BR') }, border: { display: false } },
       },
     },
   });
+}
+
+function renderComparisonFor(month) {
+  const [y, m] = month.split('-').map(Number);
+  const prevKey = monthKey(new Date(y, m - 2, 1).getFullYear(), new Date(y, m - 2, 1).getMonth());
+
+  const curExp  = expOfMonth(month);
+  const prevExp = expOfMonth(prevKey);
+  const curTot  = total(curExp);
+  const prevTot = total(prevExp);
+
+  document.getElementById('comp-cur-month').textContent  = monthLabel(month);
+  document.getElementById('comp-prev-month').textContent = monthLabel(prevKey);
+  document.getElementById('comp-cur-total').textContent  = fmt(curTot);
+  document.getElementById('comp-prev-total').textContent = fmt(prevTot);
+  document.getElementById('comp-cur-j').textContent  = fmt(total(curExp.filter(e => e.person === 'jhonatan')));
+  document.getElementById('comp-cur-c').textContent  = fmt(total(curExp.filter(e => e.person === 'camila')));
+  document.getElementById('comp-prev-j').textContent = fmt(total(prevExp.filter(e => e.person === 'jhonatan')));
+  document.getElementById('comp-prev-c').textContent = fmt(total(prevExp.filter(e => e.person === 'camila')));
+
+  const badge = document.getElementById('comp-diff-badge');
+  if (prevTot === 0) {
+    badge.textContent = '—'; badge.className = 'comp-diff-badge comp-diff-zero';
+  } else {
+    const diff = curTot - prevTot;
+    const pct  = Math.round(Math.abs(diff) / prevTot * 100);
+    badge.textContent = (diff >= 0 ? '▲ +' : '▼ -') + pct + '%';
+    badge.className   = 'comp-diff-badge ' + (diff > 0 ? 'comp-diff-up' : diff < 0 ? 'comp-diff-down' : 'comp-diff-zero');
+  }
 }
 
 /* Category Breakdown */
@@ -1128,6 +1084,11 @@ function renderHistorico() {
     diffEl.textContent = '—'; diffEl.style.color = '';
   }
 
+  // Charts use histMonth as selected month
+  renderHistoryChartFor(histMonth);
+  renderCatBreakdown(exp);
+  renderComparisonFor(histMonth);
+
   const tbody = document.getElementById('hist-tbody');
   const cards  = document.getElementById('hist-cards');
 
@@ -1143,10 +1104,7 @@ function renderHistorico() {
   tbody.innerHTML = sorted.map(e => {
     const zero = e.value === 0;
     return `<tr>
-      <td><div class="name-cell">
-        <div class="row-dot" style="background:${catColor(e.category)}"></div>
-        ${e.name}
-      </div></td>
+      <td><div class="name-cell"><div class="row-dot" style="background:${catColor(e.category)}"></div>${e.name}</div></td>
       <td>${catBadge(e.category)}</td>
       <td>${personBadge(e.person)}</td>
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
@@ -1159,18 +1117,12 @@ function renderHistorico() {
       <div class="exp-card-dot" style="background:${catColor(e.category)}"></div>
       <div class="exp-card-info">
         <div class="exp-card-name">${e.name}</div>
-        <div class="exp-card-meta">
-          ${catBadge(e.category)}
-          ${personBadge(e.person)}
-        </div>
+        <div class="exp-card-meta">${catBadge(e.category)} ${personBadge(e.person)}</div>
       </div>
-      <div class="exp-card-right">
-        <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
-      </div>
+      <div class="exp-card-right"><span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span></div>
     </div>`;
   }).join('');
 }
-
 function changeMonth(dir) {
   const [y, m] = histMonth.split('-').map(Number);
   const d = new Date(y, m - 1 + dir, 1);

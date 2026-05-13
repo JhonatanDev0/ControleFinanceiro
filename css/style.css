@@ -1494,3 +1494,115 @@ body {
   min-width: 90px;
   text-align: right;
 }
+
+/* ---- Numeric weight adjustment ---- */
+.kpi-value,
+.val-mono,
+.meta-summary-val,
+.meta-pct-badge,
+.comp-total,
+.comp-diff-badge,
+.balance-result-value,
+.balance-val,
+.balance-pct,
+.salary-total-val,
+.salary-input,
+.upcoming-val,
+.exp-card-val,
+.alloc-val,
+.alloc-pct-input,
+.cat-val { font-weight: 400; }
+
+/* ============================================================
+   UNIFIED FILTER BAR
+   ============================================================ */
+.filter-unified {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-selects {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 12px;
+  flex: 1;
+  min-width: 0;
+  transition: border .15s;
+}
+.filter-select-wrap:focus-within { border-color: var(--green); }
+.filter-select-wrap i { font-size: 15px; color: var(--text3); flex-shrink: 0; }
+
+.filter-select {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Sora', sans-serif;
+  color: var(--text);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+.filter-select option { background: var(--surface); }
+
+/* ---- Segmented control ---- */
+.status-seg {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.seg-btn {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Sora', sans-serif;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.seg-btn i { font-size: 13px; }
+.seg-btn:hover { color: var(--text); background: var(--surface3); }
+.seg-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.seg-btn[data-status="pending"].active { color: #D97706; }
+.seg-btn[data-status="paid"].active    { color: var(--green); }
+
+@media (max-width: 576px) {
+  .filter-unified { flex-direction: column; align-items: stretch; }
+  .filter-selects  { flex-direction: column; }
+  .status-seg      { justify-content: center; }
+}
+
+[data-theme="dark"] .filter-select-wrap { background: var(--surface2); }
+[data-theme="dark"] .filter-select option { background: var(--surface2); }
+[data-theme="dark"] .seg-btn.active { background: var(--surface3); box-shadow: none; }

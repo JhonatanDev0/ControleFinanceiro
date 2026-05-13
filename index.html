@@ -86,14 +86,14 @@
         <div class="hero-welcome-img"><img src="assets/hero.png" alt="Ilustração financeira"/></div>
       </div>
 
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-3">
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-green"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total do mês</div><div class="kpi-value" id="dash-total">R$ 0,00</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-blue"><div class="kpi-icon"><i class="ti ti-file-invoice"></i></div><div class="kpi-body"><div class="kpi-label">Contas ativas</div><div class="kpi-value" id="dash-active">0</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-purple"><div class="kpi-icon"><i class="ti ti-target"></i></div><div class="kpi-body"><div class="kpi-label">Metas em andamento</div><div class="kpi-value" id="dash-goals">0</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-circle-off"></i></div><div class="kpi-body"><div class="kpi-label">Contas zeradas</div><div class="kpi-value" id="dash-zero">0</div></div></div></div>
       </div>
 
-      <!-- Salary + Balance row -->
+      <!-- Salary + Balance -->
       <div class="row g-3 mb-3">
         <div class="col-12 col-lg-6">
           <div class="panel h-100">
@@ -104,17 +104,11 @@
             </div>
             <div class="salary-person-row">
               <span class="person-badge person-j-badge"><i class="ti ti-user"></i> Jhonatan</span>
-              <div class="salary-input-wrap">
-                <span class="salary-prefix">R$</span>
-                <input type="text" class="salary-input" id="salary-j" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/>
-              </div>
+              <div class="salary-input-wrap"><span class="salary-prefix">R$</span><input type="text" class="salary-input" id="salary-j" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/></div>
             </div>
             <div class="salary-person-row">
               <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> Camila</span>
-              <div class="salary-input-wrap">
-                <span class="salary-prefix">R$</span>
-                <input type="text" class="salary-input" id="salary-c" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/>
-              </div>
+              <div class="salary-input-wrap"><span class="salary-prefix">R$</span><input type="text" class="salary-input" id="salary-c" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/></div>
             </div>
             <div class="salary-total-row">
               <span style="font-size:12px;color:var(--text3)">Total combinado</span>
@@ -122,76 +116,24 @@
             </div>
           </div>
         </div>
-
         <div class="col-12 col-lg-6">
           <div class="balance-card h-100" id="balance-card">
-            <div class="balance-header">
-              <i class="ti ti-scale panel-icon"></i>
-              <span class="panel-title">Saldo do mês</span>
-            </div>
+            <div class="balance-header"><i class="ti ti-scale panel-icon"></i><span class="panel-title">Saldo do mês</span></div>
             <div class="balance-body">
-              <div class="balance-row">
-                <span class="balance-label"><i class="ti ti-wallet"></i> Salários</span>
-                <span class="balance-val" id="bal-salary">R$ 0,00</span>
-              </div>
-              <div class="balance-row">
-                <span class="balance-label"><i class="ti ti-receipt"></i> Contas</span>
-                <span class="balance-val" id="bal-expenses">R$ 0,00</span>
-              </div>
+              <div class="balance-row"><span class="balance-label"><i class="ti ti-wallet"></i> Salários</span><span class="balance-val" id="bal-salary">R$ 0,00</span></div>
+              <div class="balance-row"><span class="balance-label"><i class="ti ti-receipt"></i> Contas</span><span class="balance-val" id="bal-expenses">R$ 0,00</span></div>
               <div class="balance-divider"></div>
-              <div class="balance-progress-wrap">
-                <div class="balance-progress-track">
-                  <div class="balance-progress-fill" id="bal-progress"></div>
-                </div>
-                <span class="balance-pct" id="bal-pct">0%</span>
-              </div>
-              <div class="balance-result" id="bal-result">
-                <div class="balance-result-value" id="bal-surplus">R$ 0,00</div>
-                <div class="balance-result-label" id="bal-label">de saldo disponível</div>
-              </div>
+              <div class="balance-progress-wrap"><div class="balance-progress-track"><div class="balance-progress-fill" id="bal-progress"></div></div><span class="balance-pct" id="bal-pct">0%</span></div>
+              <div class="balance-result" id="bal-result"><div class="balance-result-value" id="bal-surplus">R$ 0,00</div><div class="balance-result-label" id="bal-label">de saldo disponível</div></div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Comparison panel -->
-      <div class="comparison-panel mb-3" id="comparison-panel">
-        <div class="comp-side">
-          <div class="comp-label">Mês atual</div>
-          <div class="comp-month" id="comp-cur-month"></div>
-          <div class="comp-total" id="comp-cur-total">R$ 0,00</div>
-          <div class="comp-persons">
-            <span class="person-badge person-j-badge"><i class="ti ti-user"></i> <span id="comp-cur-j">R$ 0,00</span></span>
-            <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> <span id="comp-cur-c">R$ 0,00</span></span>
-          </div>
-        </div>
-        <div class="comp-mid">
-          <div class="comp-diff-badge" id="comp-diff-badge">—</div>
-          <i class="ti ti-arrows-exchange comp-arrow-icon"></i>
-        </div>
-        <div class="comp-side comp-side-right">
-          <div class="comp-label">Mês anterior</div>
-          <div class="comp-month" id="comp-prev-month"></div>
-          <div class="comp-total" id="comp-prev-total">R$ 0,00</div>
-          <div class="comp-persons">
-            <span class="person-badge person-j-badge"><i class="ti ti-user"></i> <span id="comp-prev-j">R$ 0,00</span></span>
-            <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> <span id="comp-prev-c">R$ 0,00</span></span>
           </div>
         </div>
       </div>
 
       <!-- Upcoming bills -->
-      <div class="panel mb-3" id="upcoming-panel">
-        <div class="panel-header">
-          <i class="ti ti-bell-ringing panel-icon"></i>
-          <span class="panel-title">Alertas de vencimento</span>
-        </div>
+      <div class="panel" id="upcoming-panel">
+        <div class="panel-header"><i class="ti ti-bell-ringing panel-icon"></i><span class="panel-title">Alertas de vencimento</span></div>
         <div id="upcoming-list"></div>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-12 col-lg-7"><div class="panel"><div class="panel-header"><i class="ti ti-chart-bar panel-icon"></i><span class="panel-title">Histórico mensal</span></div><div class="chart-wrap"><canvas id="chart-history"></canvas></div></div></div>
-        <div class="col-12 col-lg-5"><div class="panel h-100"><div class="panel-header"><i class="ti ti-tag panel-icon"></i><span class="panel-title">Por categoria</span></div><div id="cat-breakdown"></div></div></div>
       </div>
     </section>
 
@@ -213,31 +155,39 @@
         </div>
       </div>
 
-      <!-- Search -->
+      <!-- Search + Filters unified -->
       <div class="search-wrap mb-2">
         <i class="ti ti-search search-icon"></i>
         <input type="text" class="search-input" id="search-input" placeholder="Buscar conta por nome…" oninput="renderContas()"/>
         <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none"><i class="ti ti-x"></i></button>
       </div>
 
-      <div class="filters-wrap mb-3">
-        <div class="filter-bar mb-2">
-          <button class="filter-pill active" data-cat="all"><i class="ti ti-layout-grid"></i> Todas</button>
-          <button class="filter-pill" data-cat="moradia"><i class="ti ti-home"></i> Moradia</button>
-          <button class="filter-pill" data-cat="cartoes"><i class="ti ti-credit-card"></i> Cartões</button>
-          <button class="filter-pill" data-cat="servicos"><i class="ti ti-wifi"></i> Serviços</button>
-          <button class="filter-pill" data-cat="educacao"><i class="ti ti-school"></i> Educação</button>
-          <button class="filter-pill" data-cat="outros"><i class="ti ti-box"></i> Outros</button>
+      <div class="filter-unified mb-3">
+        <div class="filter-selects">
+          <div class="filter-select-wrap">
+            <i class="ti ti-tag"></i>
+            <select class="filter-select" id="filter-cat-sel" onchange="activeFilter=this.value;renderContas()">
+              <option value="all">Categoria</option>
+              <option value="moradia">🏠 Moradia</option>
+              <option value="cartoes">💳 Cartões</option>
+              <option value="servicos">📡 Serviços</option>
+              <option value="educacao">🎓 Educação</option>
+              <option value="outros">📦 Outros</option>
+            </select>
+          </div>
+          <div class="filter-select-wrap">
+            <i class="ti ti-user"></i>
+            <select class="filter-select" id="filter-person-sel" onchange="personFilter=this.value;renderContas()">
+              <option value="all">Pessoa</option>
+              <option value="jhonatan">Jhonatan</option>
+              <option value="camila">Camila</option>
+            </select>
+          </div>
         </div>
-        <div class="filter-bar mb-2">
-          <button class="filter-pill person-pill active" data-person="all"><i class="ti ti-users"></i> Todos</button>
-          <button class="filter-pill person-pill" data-person="jhonatan"><i class="ti ti-user"></i> Jhonatan</button>
-          <button class="filter-pill person-pill" data-person="camila"><i class="ti ti-user-heart"></i> Camila</button>
-        </div>
-        <div class="filter-bar">
-          <button class="filter-pill status-pill active" data-status="all"><i class="ti ti-list"></i> Todos</button>
-          <button class="filter-pill status-pill" data-status="pending"><i class="ti ti-clock"></i> Pendentes</button>
-          <button class="filter-pill status-pill" data-status="paid"><i class="ti ti-circle-check"></i> Pagas</button>
+        <div class="status-seg">
+          <button class="seg-btn active" data-status="all">Todos</button>
+          <button class="seg-btn" data-status="pending"><i class="ti ti-clock"></i> Pendentes</button>
+          <button class="seg-btn" data-status="paid"><i class="ti ti-circle-check"></i> Pagas</button>
         </div>
       </div>
 
@@ -281,19 +231,55 @@
     <!-- HISTÓRICO -->
     <section id="page-historico" class="page">
       <div class="page-header">
-        <div class="page-header-info"><h1 class="page-title"><i class="ti ti-calendar-stats"></i> Histórico</h1><p class="page-subtitle">Evolução mês a mês</p></div>
+        <div class="page-header-info"><h1 class="page-title"><i class="ti ti-calendar-stats"></i> Histórico</h1><p class="page-subtitle">Análise e evolução mês a mês</p></div>
         <div class="month-nav-ctrl">
           <button class="month-nav-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
           <span id="hist-month-lbl" class="month-nav-label">Mai 2026</span>
           <button class="month-nav-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
         </div>
       </div>
-      <div class="row g-3 mb-4">
+
+      <!-- KPIs -->
+      <div class="row g-3 mb-3">
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-green"><div class="kpi-icon"><i class="ti ti-cash"></i></div><div class="kpi-body"><div class="kpi-label">Total</div><div class="kpi-value" id="hist-total">R$ 0,00</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-blue"><div class="kpi-icon"><i class="ti ti-list-check"></i></div><div class="kpi-body"><div class="kpi-label">Contas</div><div class="kpi-value" id="hist-count">0</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-purple"><div class="kpi-icon"><i class="ti ti-arrow-up"></i></div><div class="kpi-body"><div class="kpi-label">Maior gasto</div><div class="kpi-value fs-6 lh-sm" id="hist-biggest">—</div></div></div></div>
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-exchange"></i></div><div class="kpi-body"><div class="kpi-label">Vs. mês anterior</div><div class="kpi-value fs-6" id="hist-diff">—</div></div></div></div>
       </div>
+
+      <!-- Charts row -->
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-7"><div class="panel"><div class="panel-header"><i class="ti ti-chart-bar panel-icon"></i><span class="panel-title">Evolução dos últimos 6 meses</span></div><div class="chart-wrap"><canvas id="chart-history"></canvas></div></div></div>
+        <div class="col-12 col-lg-5"><div class="panel h-100"><div class="panel-header"><i class="ti ti-tag panel-icon"></i><span class="panel-title">Por categoria</span></div><div id="cat-breakdown"></div></div></div>
+      </div>
+
+      <!-- Comparison -->
+      <div class="comparison-panel mb-3" id="comparison-panel">
+        <div class="comp-side">
+          <div class="comp-label">Mês selecionado</div>
+          <div class="comp-month" id="comp-cur-month"></div>
+          <div class="comp-total" id="comp-cur-total">R$ 0,00</div>
+          <div class="comp-persons">
+            <span class="person-badge person-j-badge"><i class="ti ti-user"></i> <span id="comp-cur-j">R$ 0,00</span></span>
+            <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> <span id="comp-cur-c">R$ 0,00</span></span>
+          </div>
+        </div>
+        <div class="comp-mid">
+          <div class="comp-diff-badge" id="comp-diff-badge">—</div>
+          <i class="ti ti-arrows-exchange comp-arrow-icon"></i>
+        </div>
+        <div class="comp-side comp-side-right">
+          <div class="comp-label">Mês anterior</div>
+          <div class="comp-month" id="comp-prev-month"></div>
+          <div class="comp-total" id="comp-prev-total">R$ 0,00</div>
+          <div class="comp-persons">
+            <span class="person-badge person-j-badge"><i class="ti ti-user"></i> <span id="comp-prev-j">R$ 0,00</span></span>
+            <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> <span id="comp-prev-c">R$ 0,00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail list -->
       <div class="panel p-0">
         <table class="data-table d-none d-md-table">
           <thead><tr><th><i class="ti ti-file-text"></i> Conta</th><th><i class="ti ti-tag"></i> Categoria</th><th><i class="ti ti-user"></i> Pessoa</th><th class="text-end"><i class="ti ti-coin"></i> Valor</th></tr></thead>
