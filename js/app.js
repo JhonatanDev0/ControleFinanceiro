@@ -37,6 +37,7 @@ const META_COLORS = ['#1D9E75','#2D6BE4','#6C47E8','#E8874A','#D97706','#DC2626'
 /* ---- State ---- */
 let allData      = {};
 let metas        = [];
+let allSalary    = {};
 const _now       = new Date();
 let curMonth     = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
 let histMonth    = curMonth;
@@ -118,7 +119,11 @@ function persistAll() {
   Object.keys(allData).forEach(month => {
     expObj[month] = arrToObj(allData[month]);
   });
-  db.ref('financeiro').set({ expenses: expObj, metas: arrToObj(metas) });
+  db.ref('financeiro').set({
+    expenses: expObj,
+    metas:    arrToObj(metas),
+    salary:   allSalary
+  });
 }
 
 function renderCurrentPage() {
@@ -163,6 +168,9 @@ function loadData() {
 
     // Carregar metas
     metas = objToArr(raw.metas);
+
+    // Carregar salary
+    allSalary = raw.salary || {};
 
     document.getElementById('sb-month').textContent = monthLabel(curMonth);
     hideLoading();
@@ -219,6 +227,170 @@ function checkRecurring() {
   }));
   setExpOfMonth(curMonth, seeded);
   showToast(`${seeded.length} conta(s) recorrente(s) adicionadas para ${monthLabel(curMonth)}!`);
+}
+
+/* ============================================================
+   SALARY
+   ============================================================ */
+function getSalary(month) {
+  return allSalary[month] || { jhonatan: 0, camila: 0 };
+}
+
+function getSalaryTotal(month) {
+  const s = getSalary(month);
+  return (s.jhonatan || 0) + (s.camila || 0);
+}
+
+function getSurplus(month) {
+  return getSalaryTotal(month) - total(expOfMonth(month));
+}
+
+function saveSalary() {
+  const j = parseVal(document.getElementById('salary-j').value || '0');
+  const c = parseVal(document.getElementById('salary-c').value || '0');
+  allSalary[curMonth] = { jhonatan: j, camila: c };
+  db.ref(`financeiro/salary/${curMonth}`).set({ jhonatan: j, camila: c });
+  renderBalanceCard();
+  renderAllocationPanel();
+}
+
+function selectAll(el) { el.select(); }
+
+function renderSalaryCard() {
+  const s = getSalary(curMonth);
+  const jEl = document.getElementById('salary-j');
+  const cEl = document.getElementById('salary-c');
+  if (jEl && document.activeElement !== jEl)
+    jEl.value = s.jhonatan > 0 ? s.jhonatan.toFixed(2).replace('.', ',') : '';
+  if (cEl && document.activeElement !== cEl)
+    cEl.value = s.camila > 0 ? s.camila.toFixed(2).replace('.', ',') : '';
+  const totalSal = getSalaryTotal(curMonth);
+  const dispEl = document.getElementById('salary-total-display');
+  if (dispEl) dispEl.textContent = fmt(totalSal);
+  const lbl = document.getElementById('salary-month-lbl');
+  if (lbl) lbl.textContent = monthLabel(curMonth);
+}
+
+function renderBalanceCard() {
+  const totalSal = getSalaryTotal(curMonth);
+  const totalExp = total(expOfMonth(curMonth));
+  const surplus  = totalSal - totalExp;
+  const pct      = totalSal > 0 ? Math.min(100, Math.round(totalExp / totalSal * 100)) : 0;
+
+  const salEl  = document.getElementById('bal-salary');
+  const expEl  = document.getElementById('bal-expenses');
+  const prog   = document.getElementById('bal-progress');
+  const pctEl  = document.getElementById('bal-pct');
+  const surEl  = document.getElementById('bal-surplus');
+  const lblEl  = document.getElementById('bal-label');
+  const result = document.getElementById('bal-result');
+
+  if (!salEl) return;
+
+  salEl.textContent = fmt(totalSal);
+  expEl.textContent = fmt(totalExp);
+  pctEl.textContent = pct + '%';
+
+  let color, cls, label;
+  if (totalSal === 0) {
+    color = 'var(--text3)'; cls = ''; label = 'Insira o salário para calcular';
+  } else if (surplus >= 0) {
+    color = pct > 90 ? '#D97706' : 'var(--green)';
+    cls   = pct > 90 ? 'balance-warn' : 'balance-ok';
+    label = pct > 90 ? '⚠ Margem apertada' : '✓ Salário cobre as contas';
+  } else {
+    color = '#DC2626'; cls = 'balance-bad'; label = '✗ Déficit — salário insuficiente';
+  }
+
+  prog.style.width      = pct + '%';
+  prog.style.background = color;
+  surEl.textContent     = fmt(Math.abs(surplus));
+  lblEl.textContent     = surplus < 0 ? 'de déficit' : label.replace(/^[✓✗⚠]\s/, '');
+  result.className      = 'balance-result ' + cls;
+
+  // Also update subtitle badge
+  const badgeEl = document.getElementById('bal-label');
+  if (badgeEl) badgeEl.textContent = label.replace(/^[✓✗⚠]\s/, '');
+}
+
+/* ============================================================
+   ALLOCATION
+   ============================================================ */
+function renderAllocationPanel() {
+  const surplus = getSurplus(curMonth);
+  const panel   = document.getElementById('alloc-panel');
+  if (!panel) return;
+
+  if (surplus <= 0 || !metas.length) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  document.getElementById('alloc-surplus-val').textContent = fmt(surplus);
+
+  const rows = document.getElementById('alloc-rows');
+  const incompleteMetas = metas.filter(m => m.current < m.target);
+
+  if (!incompleteMetas.length) {
+    rows.innerHTML = '<div class="empty-state" style="padding:1.5rem"><i class="ti ti-trophy"></i> Todas as metas foram concluídas!</div>';
+    return;
+  }
+
+  rows.innerHTML = incompleteMetas.map(m => {
+    const pct    = m.allocation || 0;
+    const amount = surplus * (pct / 100);
+    const color  = META_COLORS[metas.indexOf(m) % META_COLORS.length];
+    return `<div class="alloc-row">
+      <div class="alloc-row-dot" style="background:${color}"></div>
+      <span class="alloc-row-name">${m.name}</span>
+      <div class="alloc-pct-wrap">
+        <input type="number" class="alloc-pct-input" min="0" max="100" value="${pct}"
+          oninput="updateAllocation(${m.id}, this.value)" placeholder="0"/>
+        <span class="alloc-pct-symbol">%</span>
+      </div>
+      <span class="alloc-val" id="alloc-val-${m.id}">${pct > 0 ? fmt(amount) : '—'}</span>
+    </div>`;
+  }).join('');
+
+  updateAllocTotals();
+}
+
+function updateAllocation(id, val) {
+  const pct     = Math.min(100, Math.max(0, parseFloat(val) || 0));
+  const surplus = getSurplus(curMonth);
+  const idx     = metas.findIndex(m => m.id === id);
+  if (idx > -1) metas[idx].allocation = pct;
+
+  const valEl = document.getElementById('alloc-val-' + id);
+  if (valEl) valEl.textContent = pct > 0 ? fmt(surplus * (pct / 100)) : '—';
+
+  updateAllocTotals();
+}
+
+function updateAllocTotals() {
+  const totalPct = metas.reduce((s, m) => s + (m.allocation || 0), 0);
+  const badge    = document.getElementById('alloc-pct-total');
+  if (!badge) return;
+  badge.textContent = totalPct + '% alocado';
+  badge.className   = 'alloc-pct-total' + (totalPct > 100 ? ' over' : totalPct === 100 ? ' full' : '');
+}
+
+function applyAllocation() {
+  const surplus  = getSurplus(curMonth);
+  const totalPct = metas.reduce((s, m) => s + (m.allocation || 0), 0);
+
+  if (totalPct > 100) { showToast('Total de alocação ultrapassa 100%.', true); return; }
+  if (surplus <= 0)   { showToast('Sem saldo disponível para distribuir.', true); return; }
+
+  let applied = 0;
+  metas = metas.map(m => {
+    if (!m.allocation || m.allocation <= 0) return m;
+    const add = Math.round(surplus * (m.allocation / 100) * 100) / 100;
+    applied++;
+    return { ...m, current: Math.min(m.target, m.current + add) };
+  });
+
+  persistMetas();
+  showToast(`Saldo distribuído em ${applied} meta(s) com sucesso!`);
+  renderMetas();
 }
 
 /* ============================================================
@@ -485,6 +657,8 @@ function renderDashboard() {
   renderCatBreakdown(exp);
   renderUpcoming();
   renderComparison();
+  renderSalaryCard();
+  renderBalanceCard();
 }
 
 /* History Bar Chart */
@@ -776,6 +950,7 @@ function saveExp() {
    METAS (GOALS)
    ============================================================ */
 function renderMetas() {
+  renderAllocationPanel();
   const total_target  = metas.reduce((s, m) => s + m.target, 0);
   const total_current = metas.reduce((s, m) => s + m.current, 0);
   const completed     = metas.filter(m => m.current >= m.target).length;
@@ -1008,10 +1183,11 @@ function changeMonth(dir) {
    ============================================================ */
 function exportData() {
   const payload = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     expenses: allData,
-    metas: metas,
+    metas:    metas,
+    salary:   allSalary,
   };
 
   const json = JSON.stringify(payload, null, 2);

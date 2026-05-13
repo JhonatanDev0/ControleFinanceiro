@@ -93,6 +93,67 @@
         <div class="col-6 col-xl-3"><div class="kpi-card kpi-neutral"><div class="kpi-icon"><i class="ti ti-circle-off"></i></div><div class="kpi-body"><div class="kpi-label">Contas zeradas</div><div class="kpi-value" id="dash-zero">0</div></div></div></div>
       </div>
 
+      <!-- Salary + Balance row -->
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="panel h-100">
+            <div class="panel-header">
+              <i class="ti ti-wallet panel-icon"></i>
+              <span class="panel-title">Salários do mês</span>
+              <span class="panel-title-sub" id="salary-month-lbl" style="margin-left:auto;color:var(--text3);font-size:11px;text-transform:capitalize"></span>
+            </div>
+            <div class="salary-person-row">
+              <span class="person-badge person-j-badge"><i class="ti ti-user"></i> Jhonatan</span>
+              <div class="salary-input-wrap">
+                <span class="salary-prefix">R$</span>
+                <input type="text" class="salary-input" id="salary-j" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/>
+              </div>
+            </div>
+            <div class="salary-person-row">
+              <span class="person-badge person-c-badge"><i class="ti ti-user-heart"></i> Camila</span>
+              <div class="salary-input-wrap">
+                <span class="salary-prefix">R$</span>
+                <input type="text" class="salary-input" id="salary-c" placeholder="0,00" inputmode="decimal" onblur="saveSalary()" onfocus="selectAll(this)"/>
+              </div>
+            </div>
+            <div class="salary-total-row">
+              <span style="font-size:12px;color:var(--text3)">Total combinado</span>
+              <span class="salary-total-val" id="salary-total-display">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="balance-card h-100" id="balance-card">
+            <div class="balance-header">
+              <i class="ti ti-scale panel-icon"></i>
+              <span class="panel-title">Saldo do mês</span>
+            </div>
+            <div class="balance-body">
+              <div class="balance-row">
+                <span class="balance-label"><i class="ti ti-wallet"></i> Salários</span>
+                <span class="balance-val" id="bal-salary">R$ 0,00</span>
+              </div>
+              <div class="balance-row">
+                <span class="balance-label"><i class="ti ti-receipt"></i> Contas</span>
+                <span class="balance-val" id="bal-expenses">R$ 0,00</span>
+              </div>
+              <div class="balance-divider"></div>
+              <div class="balance-progress-wrap">
+                <div class="balance-progress-track">
+                  <div class="balance-progress-fill" id="bal-progress"></div>
+                </div>
+                <span class="balance-pct" id="bal-pct">0%</span>
+              </div>
+              <div class="balance-result" id="bal-result">
+                <div class="balance-result-value" id="bal-surplus">R$ 0,00</div>
+                <div class="balance-result-label" id="bal-label">de saldo disponível</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Comparison panel -->
       <div class="comparison-panel mb-3" id="comparison-panel">
         <div class="comp-side">
@@ -195,6 +256,24 @@
         <div class="page-header-info"><h1 class="page-title"><i class="ti ti-target"></i> Metas</h1><p class="page-subtitle">Acompanhe seus objetivos financeiros</p></div>
         <button class="btn-action" onclick="openMetaModal()"><i class="ti ti-plus"></i><span>Nova meta</span></button>
       </div>
+
+      <!-- Surplus allocation panel -->
+      <div class="alloc-panel mb-4" id="alloc-panel" style="display:none">
+        <div class="alloc-header">
+          <div>
+            <div class="alloc-title"><i class="ti ti-chart-pie-2"></i> Distribuição do saldo</div>
+            <div class="alloc-subtitle">Saldo disponível: <strong id="alloc-surplus-val">R$ 0,00</strong></div>
+          </div>
+          <div class="alloc-header-right">
+            <div class="alloc-pct-total" id="alloc-pct-total">0% alocado</div>
+            <button class="btn-action" onclick="applyAllocation()" id="alloc-apply-btn">
+              <i class="ti ti-check"></i><span>Aplicar às metas</span>
+            </button>
+          </div>
+        </div>
+        <div id="alloc-rows"></div>
+      </div>
+
       <div id="metas-summary" class="row g-3 mb-4"></div>
       <div id="metas-grid" class="row g-3"></div>
     </section>
