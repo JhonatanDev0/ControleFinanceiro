@@ -193,7 +193,16 @@
 
       <div class="panel p-0">
         <table class="data-table d-none d-md-table" id="exp-table">
-          <thead><tr><th><i class="ti ti-file-text"></i> Conta</th><th><i class="ti ti-tag"></i> Categoria</th><th><i class="ti ti-user"></i> Pessoa</th><th><i class="ti ti-calendar-due"></i> Vencimento</th><th class="text-end"><i class="ti ti-coin"></i> Valor</th><th class="text-end"><i class="ti ti-settings"></i> Ações</th></tr></thead>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="setSort('name')"><i class="ti ti-file-text"></i> Conta <span class="sort-ind" data-col="name"></span></th>
+              <th><i class="ti ti-tag"></i> Categoria</th>
+              <th><i class="ti ti-user"></i> Pessoa</th>
+              <th class="sortable" onclick="setSort('dueDate')"><i class="ti ti-calendar-due"></i> Vencimento <span class="sort-ind" data-col="dueDate"></span></th>
+              <th class="text-end sortable" onclick="setSort('value')"><i class="ti ti-coin"></i> Valor <span class="sort-ind" data-col="value"></span></th>
+              <th class="text-end"><i class="ti ti-settings"></i> Ações</th>
+            </tr>
+          </thead>
           <tbody id="exp-tbody"></tbody>
         </table>
         <div class="exp-cards d-md-none" id="exp-cards"></div>

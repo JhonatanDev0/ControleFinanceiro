@@ -1606,3 +1606,22 @@ body {
 [data-theme="dark"] .filter-select-wrap { background: var(--surface2); }
 [data-theme="dark"] .filter-select option { background: var(--surface2); }
 [data-theme="dark"] .seg-btn.active { background: var(--surface3); box-shadow: none; }
+
+/* ============================================================
+   SORTABLE COLUMNS
+   ============================================================ */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.sortable:hover { color: var(--green); }
+
+.sort-ind::after { content: ''; margin-left: 4px; color: var(--text3); font-size: 11px; }
+.sort-ind.asc::after  { content: '↑'; color: var(--green); }
+.sort-ind.desc::after { content: '↓'; color: var(--green); }
+
+/* ============================================================
+   NUMBER ANIMATION
+   ============================================================ */
+.animating { transition: none; }

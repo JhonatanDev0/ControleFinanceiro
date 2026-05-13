@@ -46,6 +46,8 @@ let personFilter  = 'all';
 let statusFilter  = 'all';
 let searchQuery   = '';
 let isDirty       = false;
+let sortCol       = null;
+let sortDir       = 'asc';
 let pendingDelId = null;
 let pendingDelType = 'expense';
 let chartHistory = null;
@@ -597,7 +599,7 @@ function renderDashboard() {
   document.querySelector('.hero-eyebrow').innerHTML = `<i class="ti ${greeting.icon}"></i> ${greeting.text}`;
   document.getElementById('dash-subtitle').textContent =
     fmt(tot) + ' em ' + monthLabel(curMonth);
-  document.getElementById('dash-total').textContent  = fmt(tot);
+  animateNumber(document.getElementById('dash-total'), tot);
   document.getElementById('dash-active').textContent = exp.filter(e => e.value > 0).length;
   document.getElementById('dash-goals').textContent  = metas.filter(m => m.current < m.target).length;
   document.getElementById('dash-zero').textContent   = exp.filter(e => e.value === 0).length;
@@ -736,6 +738,38 @@ async function togglePaid(id) {
 }
 
 /* ============================================================
+   NUMBER ANIMATION
+   ============================================================ */
+function animateNumber(el, toValue, duration = 700) {
+  if (!el) return;
+  const text = el.textContent.replace(/[^\d,.]/g, '').replace('.', '').replace(',', '.');
+  const from = parseFloat(text) || 0;
+  if (Math.abs(from - toValue) < 0.01) { el.textContent = fmt(toValue); return; }
+  const start = performance.now();
+  const ease  = t => 1 - Math.pow(1 - t, 3);
+  const tick  = now => {
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = fmt(from + (toValue - from) * ease(p));
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = fmt(toValue);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ============================================================
+   COLUMN SORTING
+   ============================================================ */
+function setSort(col) {
+  sortDir = sortCol === col && sortDir === 'asc' ? 'desc' : 'asc';
+  sortCol = col;
+  // Update indicators
+  document.querySelectorAll('.sort-ind').forEach(el => {
+    el.className = 'sort-ind' + (el.dataset.col === col ? ' ' + sortDir : '');
+  });
+  renderContas();
+}
+
+/* ============================================================
    CONTAS
    ============================================================ */
 function renderContas() {
@@ -745,9 +779,10 @@ function renderContas() {
   const totalAll = total(exp);
   const totalJ   = total(exp.filter(e => e.person === 'jhonatan'));
   const totalC   = total(exp.filter(e => e.person === 'camila'));
-  document.getElementById('contas-total').textContent   = fmt(totalAll);
-  document.getElementById('contas-total-j').textContent = fmt(totalJ);
-  document.getElementById('contas-total-c').textContent = fmt(totalC);
+  // Totals with animation
+  animateNumber(document.getElementById('contas-total'),   totalAll);
+  animateNumber(document.getElementById('contas-total-j'), totalJ);
+  animateNumber(document.getElementById('contas-total-c'), totalC);
 
   // Apply filters
   let filtered = exp;
@@ -768,11 +803,18 @@ function renderContas() {
     return;
   }
 
-  // Desktop table — sort: unpaid first, then by due date
+  // Apply sort
   const sortedFiltered = [...filtered].sort((a, b) => {
-    if (a.paid !== b.paid) return a.paid ? 1 : -1;
-    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-    return a.dueDate ? -1 : 1;
+    if (!sortCol) {
+      if (a.paid !== b.paid) return a.paid ? 1 : -1;
+      if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      return a.dueDate ? -1 : 1;
+    }
+    let va = sortCol === 'name' ? a.name.toLowerCase() : sortCol === 'value' ? a.value : (a.dueDate || '');
+    let vb = sortCol === 'name' ? b.name.toLowerCase() : sortCol === 'value' ? b.value : (b.dueDate || '');
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   document.getElementById('exp-tbody').innerHTML = sortedFiltered.map(e => {
