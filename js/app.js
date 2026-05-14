@@ -38,7 +38,8 @@ const META_COLORS = ['#1D9E75','#2D6BE4','#6C47E8','#E8874A','#D97706','#DC2626'
 let allData        = {};
 let metas          = [];
 let allSalary      = {};
-let allAllocations = {};  // { "2026-05": 1500 } — total alocado em metas por mês
+let allAllocations = {};
+let _skipNextSync  = false; // guard against onValue overwriting pending local writes
 const _now       = new Date();
 let curMonth     = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
 let histMonth    = curMonth;
@@ -151,6 +152,7 @@ function hideLoading() {
 function loadData() {
   showLoading();
   db.ref('financeiro').on('value', snapshot => {
+    if (_skipNextSync) { _skipNextSync = false; return; }
     const raw = snapshot.val();
 
     if (!raw) {
@@ -427,7 +429,8 @@ function applyAllocation() {
 
   allAllocations[curMonth] = Math.round(((allAllocations[curMonth] || 0) + totalMoved) * 100) / 100;
 
-  // Single atomic write — avoids race conditions with onValue listener
+  // Single atomic write — flag prevents onValue from overwriting local state
+  _skipNextSync = true;
   db.ref('financeiro').update({
     metas:                           arrToObj(metas),
     [`goalAllocations/${curMonth}`]: allAllocations[curMonth]
@@ -1140,6 +1143,7 @@ function saveMeta() {
     if (oldMeta && current < oldMeta.current) {
       const returned = Math.round((oldMeta.current - current) * 100) / 100;
       allAllocations[curMonth] = Math.max(0, Math.round(((allAllocations[curMonth] || 0) - returned) * 100) / 100);
+      _skipNextSync = true;
       db.ref('financeiro').update({
         metas: arrToObj(metas),
         [`goalAllocations/${curMonth}`]: allAllocations[curMonth]
@@ -1181,15 +1185,26 @@ function openDelModal(id, type) {
 
 function confirmDel() {
   if (pendingDelType === 'expense') {
-    setExpOfMonth(curMonth, expOfMonth(curMonth).filter(e => e.id !== pendingDelId));
+    setExpOfMonth(contasMonth, expOfMonth(contasMonth).filter(e => e.id !== pendingDelId));
     delModal().hide();
     renderContas();
     if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
   } else {
+    // Return the meta's current value back to available balance
+    const deletedMeta = metas.find(m => m.id === pendingDelId);
+    if (deletedMeta && deletedMeta.current > 0 && allAllocations[curMonth] > 0) {
+      const returned = Math.min(deletedMeta.current, allAllocations[curMonth]);
+      allAllocations[curMonth] = Math.max(0, Math.round((allAllocations[curMonth] - returned) * 100) / 100);
+    }
     metas = metas.filter(m => m.id !== pendingDelId);
-    persistMetas();
+    _skipNextSync = true;
+    db.ref('financeiro').update({
+      metas: arrToObj(metas),
+      [`goalAllocations/${curMonth}`]: allAllocations[curMonth] || 0
+    });
     delModal().hide();
     renderMetas();
+    renderBalanceCard();
     if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
   }
   pendingDelId = null;
