@@ -413,7 +413,7 @@ function applyAllocation() {
   if (totalPct > 100) { showToast('Total de alocação ultrapassa 100%.', true); return; }
   if (surplus <= 0)   { showToast('Sem saldo disponível para distribuir.', true); return; }
 
-  let applied = 0;
+  let applied    = 0;
   let totalMoved = 0;
 
   metas = metas.map(m => {
@@ -425,12 +425,15 @@ function applyAllocation() {
     return { ...m, current: hasLimit ? Math.min(m.target, m.current + add) : m.current + add };
   });
 
-  // Deduct from available balance
   allAllocations[curMonth] = Math.round(((allAllocations[curMonth] || 0) + totalMoved) * 100) / 100;
-  db.ref(`financeiro/goalAllocations/${curMonth}`).set(allAllocations[curMonth]);
 
-  persistMetas();
-  showToast(`R$ ${fmt(totalMoved).replace('R$ ','')} distribuído em ${applied} meta(s)!`);
+  // Single atomic write — avoids race conditions with onValue listener
+  db.ref('financeiro').update({
+    metas:                           arrToObj(metas),
+    [`goalAllocations/${curMonth}`]: allAllocations[curMonth]
+  });
+
+  showToast(`R$ ${fmt(totalMoved).replace('R$ ', '')} distribuído em ${applied} meta(s)!`);
   renderMetas();
   renderBalanceCard();
   renderAllocationPanel();
@@ -838,6 +841,10 @@ function setSort(col) {
    CONTAS
    ============================================================ */
 function renderContas() {
+  // Update month nav label
+  const navLbl = document.getElementById('contas-month-lbl');
+  if (navLbl) navLbl.textContent = monthLabel(contasMonth);
+
   const exp = expOfMonth(contasMonth);
 
   // Totals (always from full list, not filtered)
@@ -1133,13 +1140,18 @@ function saveMeta() {
     if (oldMeta && current < oldMeta.current) {
       const returned = Math.round((oldMeta.current - current) * 100) / 100;
       allAllocations[curMonth] = Math.max(0, Math.round(((allAllocations[curMonth] || 0) - returned) * 100) / 100);
-      db.ref(`financeiro/goalAllocations/${curMonth}`).set(allAllocations[curMonth]);
+      db.ref('financeiro').update({
+        metas: arrToObj(metas),
+        [`goalAllocations/${curMonth}`]: allAllocations[curMonth]
+      });
+    } else {
+      persistMetas();
     }
   } else {
     const newId = metas.length ? Math.max(...metas.map(m => m.id)) + 1 : 1;
     metas.push({ id: newId, name, target, current, autoAlloc, autoAllocPct, allocation: autoAlloc ? autoAllocPct : 0 });
+    persistMetas();
   }
-  persistMetas();
   metaModal().hide();
   renderMetas();
   renderBalanceCard();
