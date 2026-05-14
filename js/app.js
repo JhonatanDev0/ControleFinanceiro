@@ -274,6 +274,16 @@ function saveSalary() {
 
 function selectAll(el) { el.select(); }
 
+function resetAllocations() {
+  if (!confirm(`Zerar o valor "Aplicado em metas" de ${monthLabel(curMonth)}?\nIsso não altera os valores das metas, apenas libera o saldo.`)) return;
+  allAllocations[curMonth] = 0;
+  _skipNextSync = true;
+  db.ref(`financeiro/goalAllocations/${curMonth}`).set(0);
+  renderBalanceCard();
+  renderAllocationPanel();
+  showToast('Alocações zeradas para ' + monthLabel(curMonth));
+}
+
 function renderSalaryCard() {
   const s = getSalary(curMonth);
   const jEl = document.getElementById('salary-j');
