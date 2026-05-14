@@ -1625,3 +1625,62 @@ body {
    NUMBER ANIMATION
    ============================================================ */
 .animating { transition: none; }
+
+/* ============================================================
+   MOBILE TEXT & LAYOUT FIXES
+   ============================================================ */
+.exp-card-name,
+.alloc-row-name,
+.meta-name,
+.comp-month,
+.comp-total,
+.kpi-label {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Allocation row wraps on small screens */
+.alloc-row {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 576px) {
+  .alloc-row-name { flex: 1 1 100%; order: 1; }
+  .alloc-pct-wrap { order: 2; }
+  .alloc-val      { order: 3; margin-left: auto; }
+  .alloc-header   { flex-direction: column; align-items: flex-start; }
+  .alloc-header-right { width: 100%; justify-content: space-between; }
+}
+
+/* FAB — higher z-index, more bottom offset, shrink near action buttons */
+.fab-btn {
+  bottom: calc(var(--bnav-h) + 1.5rem);
+  z-index: 140;
+}
+
+/* Push last card/row above FAB on mobile */
+@media (max-width: 991px) {
+  .panel:last-child,
+  .exp-cards,
+  #metas-grid {
+    padding-bottom: calc(var(--bnav-h) + 2rem);
+  }
+}
+
+/* Auto-allocation row in modal */
+.auto-alloc-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.auto-alloc-pct {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text2);
+}

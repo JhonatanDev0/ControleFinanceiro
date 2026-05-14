@@ -35,9 +35,10 @@ const CATEGORIES = {
 const META_COLORS = ['#1D9E75','#2D6BE4','#6C47E8','#E8874A','#D97706','#DC2626'];
 
 /* ---- State ---- */
-let allData      = {};
-let metas        = [];
-let allSalary    = {};
+let allData        = {};
+let metas          = [];
+let allSalary      = {};
+let allAllocations = {};  // { "2026-05": 1500 } — total alocado em metas por mês
 const _now       = new Date();
 let curMonth     = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
 let histMonth    = curMonth;
@@ -48,6 +49,7 @@ let searchQuery   = '';
 let isDirty       = false;
 let sortCol       = null;
 let sortDir       = 'asc';
+let contasMonth   = curMonth;
 let pendingDelId = null;
 let pendingDelType = 'expense';
 let chartHistory = null;
@@ -118,13 +120,12 @@ function persistMetas() {
 
 function persistAll() {
   const expObj = {};
-  Object.keys(allData).forEach(month => {
-    expObj[month] = arrToObj(allData[month]);
-  });
+  Object.keys(allData).forEach(month => { expObj[month] = arrToObj(allData[month]); });
   db.ref('financeiro').set({
-    expenses: expObj,
-    metas:    arrToObj(metas),
-    salary:   allSalary
+    expenses:         expObj,
+    metas:            arrToObj(metas),
+    salary:           allSalary,
+    goalAllocations:  allAllocations
   });
 }
 
@@ -171,8 +172,9 @@ function loadData() {
     // Carregar metas
     metas = objToArr(raw.metas);
 
-    // Carregar salary
-    allSalary = raw.salary || {};
+    // Carregar salary e alocações
+    allSalary      = raw.salary      || {};
+    allAllocations = raw.goalAllocations || {};
 
     document.getElementById('sb-month').textContent = monthLabel(curMonth);
     hideLoading();
@@ -243,8 +245,20 @@ function getSalaryTotal(month) {
   return (s.jhonatan || 0) + (s.camila || 0);
 }
 
+function getPrevCarryover(month) {
+  const [y, m] = month.split('-').map(Number);
+  const prevKey = monthKey(new Date(y, m - 2, 1).getFullYear(), new Date(y, m - 2, 1).getMonth());
+  const s = getSalaryTotal(prevKey) - total(expOfMonth(prevKey));
+  return s > 0 ? Math.round(s * 100) / 100 : 0;
+}
+
+function getTotalAvailable(month) {
+  const allocated = allAllocations[month] || 0;
+  return getSalaryTotal(month) + getPrevCarryover(month) - total(expOfMonth(month)) - allocated;
+}
+
 function getSurplus(month) {
-  return getSalaryTotal(month) - total(expOfMonth(month));
+  return getTotalAvailable(month);
 }
 
 function saveSalary() {
@@ -274,45 +288,59 @@ function renderSalaryCard() {
 }
 
 function renderBalanceCard() {
-  const totalSal = getSalaryTotal(curMonth);
-  const totalExp = total(expOfMonth(curMonth));
-  const surplus  = totalSal - totalExp;
-  const pct      = totalSal > 0 ? Math.min(100, Math.round(totalExp / totalSal * 100)) : 0;
+  const totalSal  = getSalaryTotal(curMonth);
+  const carryover = getPrevCarryover(curMonth);
+  const totalExp  = total(expOfMonth(curMonth));
+  const allocated = allAllocations[curMonth] || 0;
+  const available = totalSal + carryover - totalExp - allocated;
+  const base      = totalSal + carryover;
+  const pct       = base > 0 ? Math.min(100, Math.round((totalExp + allocated) / base * 100)) : 0;
 
-  const salEl  = document.getElementById('bal-salary');
-  const expEl  = document.getElementById('bal-expenses');
-  const prog   = document.getElementById('bal-progress');
-  const pctEl  = document.getElementById('bal-pct');
-  const surEl  = document.getElementById('bal-surplus');
-  const lblEl  = document.getElementById('bal-label');
-  const result = document.getElementById('bal-result');
-
+  const salEl   = document.getElementById('bal-salary');
+  const expEl   = document.getElementById('bal-expenses');
+  const carryEl = document.getElementById('bal-carryover');
+  const carryRow= document.getElementById('bal-carry-row');
+  const prog    = document.getElementById('bal-progress');
+  const pctEl   = document.getElementById('bal-pct');
+  const surEl   = document.getElementById('bal-surplus');
+  const lblEl   = document.getElementById('bal-label');
+  const result  = document.getElementById('bal-result');
   if (!salEl) return;
 
   salEl.textContent = fmt(totalSal);
   expEl.textContent = fmt(totalExp);
-  pctEl.textContent = pct + '%';
+
+  if (carryover > 0 && carryRow && carryEl) {
+    carryRow.style.display = '';
+    carryEl.textContent = '+ ' + fmt(carryover);
+  } else if (carryRow) {
+    carryRow.style.display = 'none';
+  }
+
+  const allocRow = document.getElementById('bal-alloc-row');
+  const allocEl  = document.getElementById('bal-allocated');
+  if (allocRow && allocEl) {
+    if (allocated > 0) { allocRow.style.display = ''; allocEl.textContent = '- ' + fmt(allocated); }
+    else               { allocRow.style.display = 'none'; }
+  }
 
   let color, cls, label;
-  if (totalSal === 0) {
+  if (totalSal === 0 && carryover === 0) {
     color = 'var(--text3)'; cls = ''; label = 'Insira o salário para calcular';
-  } else if (surplus >= 0) {
+  } else if (available >= 0) {
     color = pct > 90 ? '#D97706' : 'var(--green)';
     cls   = pct > 90 ? 'balance-warn' : 'balance-ok';
-    label = pct > 90 ? '⚠ Margem apertada' : '✓ Salário cobre as contas';
+    label = pct > 90 ? 'Margem apertada' : 'Salário cobre as contas';
   } else {
-    color = '#DC2626'; cls = 'balance-bad'; label = '✗ Déficit — salário insuficiente';
+    color = '#DC2626'; cls = 'balance-bad'; label = 'Déficit — salário insuficiente';
   }
 
   prog.style.width      = pct + '%';
   prog.style.background = color;
-  surEl.textContent     = fmt(Math.abs(surplus));
-  lblEl.textContent     = surplus < 0 ? 'de déficit' : label.replace(/^[✓✗⚠]\s/, '');
+  if (pctEl) pctEl.textContent = pct + '%';
+  surEl.textContent     = fmt(Math.abs(available));
+  lblEl.textContent     = available < 0 ? 'de déficit' : label;
   result.className      = 'balance-result ' + cls;
-
-  // Also update subtitle badge
-  const badgeEl = document.getElementById('bal-label');
-  if (badgeEl) badgeEl.textContent = label.replace(/^[✓✗⚠]\s/, '');
 }
 
 /* ============================================================
@@ -321,30 +349,36 @@ function renderBalanceCard() {
 function renderAllocationPanel() {
   const surplus = getSurplus(curMonth);
   const panel   = document.getElementById('alloc-panel');
-  if (!panel) return;
-
-  if (surplus <= 0 || !metas.length) { panel.style.display = 'none'; return; }
+  if (!panel || !metas.length) { if (panel) panel.style.display = 'none'; return; }
   panel.style.display = '';
 
-  document.getElementById('alloc-surplus-val').textContent = fmt(surplus);
+  const surplusEl = document.getElementById('alloc-surplus-val');
+  if (surplusEl) surplusEl.textContent = fmt(Math.max(0, surplus));
 
   const rows = document.getElementById('alloc-rows');
-  const incompleteMetas = metas.filter(m => m.current < m.target);
 
-  if (!incompleteMetas.length) {
-    rows.innerHTML = '<div class="empty-state" style="padding:1.5rem"><i class="ti ti-trophy"></i> Todas as metas foram concluídas!</div>';
+  if (surplus <= 0) {
+    rows.innerHTML = `<div class="empty-state" style="padding:1.25rem">
+      <i class="ti ti-mood-sad"></i> Sem saldo disponível para distribuir este mês.
+    </div>`;
+    updateAllocTotals();
     return;
   }
 
-  rows.innerHTML = incompleteMetas.map(m => {
+  rows.innerHTML = metas.map(m => {
     const pct    = m.allocation || 0;
     const amount = surplus * (pct / 100);
     const color  = META_COLORS[metas.indexOf(m) % META_COLORS.length];
+    const isAuto = m.autoAlloc && m.autoAllocPct > 0;
     return `<div class="alloc-row">
       <div class="alloc-row-dot" style="background:${color}"></div>
-      <span class="alloc-row-name">${m.name}</span>
+      <div class="alloc-row-name">
+        ${m.name}
+        ${isAuto ? '<span class="recurring-badge" title="Alocação automática"><i class="ti ti-refresh"></i> Auto</span>' : ''}
+      </div>
       <div class="alloc-pct-wrap">
-        <input type="number" class="alloc-pct-input" min="0" max="100" value="${pct}"
+        <input type="number" class="alloc-pct-input" min="0" max="100"
+          value="${pct}" ${isAuto ? 'readonly style="opacity:.6"' : ''}
           oninput="updateAllocation(${m.id}, this.value)" placeholder="0"/>
         <span class="alloc-pct-symbol">%</span>
       </div>
@@ -360,10 +394,8 @@ function updateAllocation(id, val) {
   const surplus = getSurplus(curMonth);
   const idx     = metas.findIndex(m => m.id === id);
   if (idx > -1) metas[idx].allocation = pct;
-
   const valEl = document.getElementById('alloc-val-' + id);
   if (valEl) valEl.textContent = pct > 0 ? fmt(surplus * (pct / 100)) : '—';
-
   updateAllocTotals();
 }
 
@@ -378,21 +410,51 @@ function updateAllocTotals() {
 function applyAllocation() {
   const surplus  = getSurplus(curMonth);
   const totalPct = metas.reduce((s, m) => s + (m.allocation || 0), 0);
-
   if (totalPct > 100) { showToast('Total de alocação ultrapassa 100%.', true); return; }
   if (surplus <= 0)   { showToast('Sem saldo disponível para distribuir.', true); return; }
 
   let applied = 0;
+  let totalMoved = 0;
+
   metas = metas.map(m => {
     if (!m.allocation || m.allocation <= 0) return m;
-    const add = Math.round(surplus * (m.allocation / 100) * 100) / 100;
+    const add      = Math.round(surplus * (m.allocation / 100) * 100) / 100;
+    const hasLimit = m.target > 0;
     applied++;
-    return { ...m, current: Math.min(m.target, m.current + add) };
+    totalMoved += add;
+    return { ...m, current: hasLimit ? Math.min(m.target, m.current + add) : m.current + add };
   });
 
+  // Deduct from available balance
+  allAllocations[curMonth] = Math.round(((allAllocations[curMonth] || 0) + totalMoved) * 100) / 100;
+  db.ref(`financeiro/goalAllocations/${curMonth}`).set(allAllocations[curMonth]);
+
   persistMetas();
-  showToast(`Saldo distribuído em ${applied} meta(s) com sucesso!`);
+  showToast(`R$ ${fmt(totalMoved).replace('R$ ','')} distribuído em ${applied} meta(s)!`);
   renderMetas();
+  renderBalanceCard();
+  renderAllocationPanel();
+}
+
+function applyAutoAllocations() {
+  const surplus = getSurplus(curMonth);
+  if (surplus <= 0) return;
+  const autoMetas = metas.filter(m => m.autoAlloc && m.autoAllocPct > 0);
+  if (!autoMetas.length) return;
+
+  // Pre-fill allocation % from autoAllocPct
+  metas = metas.map(m => m.autoAlloc && m.autoAllocPct > 0
+    ? { ...m, allocation: m.autoAllocPct }
+    : m
+  );
+  persistMetas();
+}
+
+function toggleAutoAlloc(cb) {
+  const wrap = document.getElementById('auto-alloc-pct-wrap');
+  const lbl  = document.getElementById('meta-auto-label');
+  if (wrap) wrap.style.display = cb.checked ? 'flex' : 'none';
+  if (lbl)  lbl.textContent    = cb.checked ? 'Ativada' : 'Desativada';
 }
 
 /* ============================================================
@@ -501,19 +563,19 @@ function copyPrevMonth() {
   if (!prevExp.length) { showToast('Nenhuma conta encontrada no mês anterior.', true); return; }
 
   document.getElementById('copy-modal-desc').textContent =
-    `${prevExp.length} conta(s) de ${monthLabel(prevKey)} serão copiadas para ${monthLabel(curMonth)} com status pendente.`;
+    `${prevExp.length} conta(s) de ${monthLabel(prevKey)} serão copiadas para ${monthLabel(contasMonth)} com status pendente.`;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('copyModal')).show();
 }
 
 function confirmCopyPrev() {
-  const [y, m] = curMonth.split('-').map(Number);
+  const [y, m] = contasMonth.split('-').map(Number);
   const prevDate = new Date(y, m - 2, 1);
   const prevKey  = monthKey(prevDate.getFullYear(), prevDate.getMonth());
   const prevExp  = expOfMonth(prevKey);
-  const current  = expOfMonth(curMonth);
+  const current  = expOfMonth(contasMonth);
   const maxId    = current.length ? Math.max(...current.map(e => e.id)) : 0;
   const copied   = prevExp.map((e, i) => ({ ...e, id: maxId + i + 1, paid: false }));
-  setExpOfMonth(curMonth, [...current, ...copied]);
+  setExpOfMonth(contasMonth, [...current, ...copied]);
   bootstrap.Modal.getOrCreateInstance(document.getElementById('copyModal')).hide();
   renderContas();
   showToast(`${copied.length} conta(s) copiadas com sucesso!`);
@@ -583,7 +645,10 @@ function navigateTo(page) {
   });
 
   if (page === 'dashboard') renderDashboard();
-  if (page === 'contas')    renderContas();
+  if (page === 'contas') {
+    contasMonth = contasMonth || curMonth;
+    renderContas();
+  }
   if (page === 'metas')     renderMetas();
   if (page === 'historico') renderHistorico();
 }
@@ -773,7 +838,7 @@ function setSort(col) {
    CONTAS
    ============================================================ */
 function renderContas() {
-  const exp = expOfMonth(curMonth);
+  const exp = expOfMonth(contasMonth);
 
   // Totals (always from full list, not filtered)
   const totalAll = total(exp);
@@ -793,7 +858,7 @@ function renderContas() {
   if (searchQuery)             filtered = filtered.filter(e => e.name.toLowerCase().includes(searchQuery));
 
   document.getElementById('contas-subtitle').textContent =
-    filtered.length + ' conta' + (filtered.length !== 1 ? 's' : '') + ' · ' + monthLabel(curMonth);
+    filtered.length + ' conta' + (filtered.length !== 1 ? 's' : '') + ' · ' + monthLabel(contasMonth);
 
   const emptyHtml = `<div class="empty-state"><i class="ti ti-receipt-off"></i>Nenhuma conta encontrada.</div>`;
 
@@ -831,7 +896,7 @@ function renderContas() {
       <td class="text-end val-mono ${zero ? 'val-zero' : ''}">${fmt(e.value)}</td>
       <td class="text-end">
         ${paidBtn(e.id, e.paid)}
-        <button class="tbl-btn" onclick="openEditModal(${e.id},'${curMonth}')" title="Editar"><i class="ti ti-pencil"></i></button>
+        <button class="tbl-btn" onclick="openEditModal(${e.id},contasMonth)" title="Editar"><i class="ti ti-pencil"></i></button>
         <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')" title="Remover"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
@@ -854,7 +919,7 @@ function renderContas() {
         <span class="exp-card-val ${zero ? 'zero' : ''}">${fmt(e.value)}</span>
         <div class="exp-card-actions">
           ${paidBtn(e.id, e.paid)}
-          <button class="tbl-btn" onclick="openEditModal(${e.id},'${curMonth}')"><i class="ti ti-pencil"></i></button>
+          <button class="tbl-btn" onclick="openEditModal(${e.id},contasMonth)"><i class="ti ti-pencil"></i></button>
           <button class="tbl-btn del" onclick="openDelModal(${e.id},'expense')"><i class="ti ti-trash"></i></button>
         </div>
       </div>
@@ -866,8 +931,8 @@ function renderContas() {
 function openAddModal() {
   isDirty = false;
   document.getElementById('modal-id').value              = '';
-  document.getElementById('modal-original-month').value  = curMonth;
-  document.getElementById('modal-month').value           = curMonth;
+  document.getElementById('modal-original-month').value  = contasMonth;
+  document.getElementById('modal-month').value           = contasMonth;
   document.getElementById('modal-name').value            = '';
   document.getElementById('modal-cat').value             = 'moradia';
   document.getElementById('modal-val').value             = '';
@@ -986,30 +1051,30 @@ function renderMetas() {
   }
 
   grid.innerHTML = metas.map((m, idx) => {
-    const color   = META_COLORS[idx % META_COLORS.length];
-    const pct     = Math.min(100, Math.round(m.current / m.target * 100)) || 0;
-    const done    = m.current >= m.target;
-    const badgeBg = done ? '#E1F5EE' : '#EDE9FD';
-    const badgeFg = done ? '#085041' : '#6C47E8';
+    const color    = META_COLORS[idx % META_COLORS.length];
+    const hasTarget = m.target > 0;
+    const done     = hasTarget && m.current >= m.target;
+    const pct      = hasTarget ? Math.min(100, Math.round(m.current / m.target * 100)) || 0 : null;
+    const badgeBg  = done ? '#E1F5EE' : pct === null ? '#EDE9FD' : '#EDE9FD';
+    const badgeFg  = done ? '#085041' : '#6C47E8';
+    const badgeTxt = done ? '✓ Concluída' : pct !== null ? pct + '%' : 'Aberta';
     return `
     <div class="col-12 col-md-6 col-xl-4">
       <div class="meta-card">
         <div class="meta-card-accent" style="background:${color}"></div>
         <div class="meta-top">
           <div>
-            <div class="meta-name">${m.name}</div>
+            <div class="meta-name">${m.name}
+              ${m.autoAlloc ? ' <span class="recurring-badge"><i class="ti ti-refresh"></i> Auto ' + m.autoAllocPct + '%</span>' : ''}
+            </div>
           </div>
-          <span class="meta-pct-badge" style="background:${badgeBg};color:${badgeFg}">
-            ${done ? '✓ Concluída' : pct + '%'}
-          </span>
+          <span class="meta-pct-badge" style="background:${badgeBg};color:${badgeFg}">${badgeTxt}</span>
         </div>
         <div class="meta-values">
           <span>Atual: <strong>${fmt(m.current)}</strong></span>
-          <span>Meta: <strong>${fmt(m.target)}</strong></span>
+          ${hasTarget ? `<span>Meta: <strong>${fmt(m.target)}</strong></span>` : '<span style="color:var(--text3);font-size:11px">Sem limite definido</span>'}
         </div>
-        <div class="meta-progress-track">
-          <div class="meta-progress-fill" style="width:${pct}%;background:${color}"></div>
-        </div>
+        ${hasTarget ? `<div class="meta-progress-track"><div class="meta-progress-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
         <div class="meta-actions">
           <button class="tbl-btn" onclick="openEditMeta(${m.id})" title="Editar"><i class="ti ti-pencil"></i></button>
           <button class="tbl-btn del" onclick="openDelModal(${m.id},'meta')" title="Remover"><i class="ti ti-trash"></i></button>
@@ -1024,6 +1089,10 @@ function openMetaModal() {
   document.getElementById('meta-modal-name').value    = '';
   document.getElementById('meta-modal-target').value  = '';
   document.getElementById('meta-modal-current').value = '';
+  document.getElementById('meta-modal-auto').checked  = false;
+  document.getElementById('meta-modal-auto-pct').value= '';
+  document.getElementById('auto-alloc-pct-wrap').style.display = 'none';
+  document.getElementById('meta-auto-label').textContent = 'Desativada';
   document.getElementById('meta-modal-title').textContent = 'Nova meta';
   metaModal().show();
   setTimeout(() => document.getElementById('meta-modal-name').focus(), 350);
@@ -1034,29 +1103,46 @@ function openEditMeta(id) {
   if (!m) return;
   document.getElementById('meta-modal-id').value      = id;
   document.getElementById('meta-modal-name').value    = m.name;
-  document.getElementById('meta-modal-target').value  = m.target.toFixed(2).replace('.', ',');
-  document.getElementById('meta-modal-current').value = m.current.toFixed(2).replace('.', ',');
+  document.getElementById('meta-modal-target').value  = m.target > 0 ? m.target.toFixed(2).replace('.', ',') : '';
+  document.getElementById('meta-modal-current').value = m.current > 0 ? m.current.toFixed(2).replace('.', ',') : '';
+  document.getElementById('meta-modal-auto').checked  = !!m.autoAlloc;
+  document.getElementById('meta-modal-auto-pct').value= m.autoAllocPct || '';
+  document.getElementById('auto-alloc-pct-wrap').style.display = m.autoAlloc ? 'flex' : 'none';
+  document.getElementById('meta-auto-label').textContent = m.autoAlloc ? 'Ativada' : 'Desativada';
   document.getElementById('meta-modal-title').textContent = 'Editar meta';
   metaModal().show();
 }
 
 function saveMeta() {
-  const id      = document.getElementById('meta-modal-id').value;
-  const name    = document.getElementById('meta-modal-name').value.trim();
-  const target  = parseVal(document.getElementById('meta-modal-target').value);
-  const current = parseVal(document.getElementById('meta-modal-current').value);
+  const id          = document.getElementById('meta-modal-id').value;
+  const name        = document.getElementById('meta-modal-name').value.trim();
+  const targetRaw   = document.getElementById('meta-modal-target').value;
+  const target      = targetRaw ? parseVal(targetRaw) : 0;
+  const current     = parseVal(document.getElementById('meta-modal-current').value);
+  const autoAlloc   = document.getElementById('meta-modal-auto').checked;
+  const autoAllocPct= parseFloat(document.getElementById('meta-modal-auto-pct').value) || 0;
   if (!name) { document.getElementById('meta-modal-name').focus(); return; }
 
   if (id) {
+    const oldMeta = metas.find(m => m.id === +id);
     const idx = metas.findIndex(m => m.id === +id);
-    if (idx > -1) metas[idx] = { ...metas[idx], name, target, current };
+    if (idx > -1) metas[idx] = { ...metas[idx], name, target, current, autoAlloc, autoAllocPct,
+      allocation: autoAlloc ? autoAllocPct : (metas[idx].allocation || 0) };
+
+    // If current was reduced, return the difference to available balance
+    if (oldMeta && current < oldMeta.current) {
+      const returned = Math.round((oldMeta.current - current) * 100) / 100;
+      allAllocations[curMonth] = Math.max(0, Math.round(((allAllocations[curMonth] || 0) - returned) * 100) / 100);
+      db.ref(`financeiro/goalAllocations/${curMonth}`).set(allAllocations[curMonth]);
+    }
   } else {
     const newId = metas.length ? Math.max(...metas.map(m => m.id)) + 1 : 1;
-    metas.push({ id: newId, name, target, current });
+    metas.push({ id: newId, name, target, current, autoAlloc, autoAllocPct, allocation: autoAlloc ? autoAllocPct : 0 });
   }
   persistMetas();
   metaModal().hide();
   renderMetas();
+  renderBalanceCard();
   if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
 }
 
@@ -1165,6 +1251,13 @@ function renderHistorico() {
     </div>`;
   }).join('');
 }
+function changeContasMonth(dir) {
+  const [y, m] = contasMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + dir, 1);
+  contasMonth = monthKey(d.getFullYear(), d.getMonth());
+  renderContas();
+}
+
 function changeMonth(dir) {
   const [y, m] = histMonth.split('-').map(Number);
   const d = new Date(y, m - 1 + dir, 1);
