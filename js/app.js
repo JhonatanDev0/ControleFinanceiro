@@ -826,6 +826,10 @@ function animateNumber(el, toValue, duration = 700) {
   const text = el.textContent.replace(/[^\d,.]/g, '').replace('.', '').replace(',', '.');
   const from = parseFloat(text) || 0;
   if (Math.abs(from - toValue) < 0.01) { el.textContent = fmt(toValue); return; }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = fmt(toValue);
+    return;
+  }
   const start = performance.now();
   const ease  = t => 1 - Math.pow(1 - t, 3);
   const tick  = now => {
